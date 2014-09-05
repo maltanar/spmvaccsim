@@ -11,7 +11,7 @@ class ProcessingElement;
 class SpMVOCMSimulation : public sc_module
 {
 public:
-    SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE, CacheMode cacheMode, bool useInterleavedMapping, QMap<QString, QString> memsysOverrides);
+    SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE, CacheMode cacheMode, uint64_t cacheWordsPerPE, bool useInterleavedMapping, QMap<QString, QString> memsysOverrides);
     ~SpMVOCMSimulation();
 
     void run();
@@ -30,6 +30,7 @@ protected:
     CacheMode m_cacheMode;
     bool m_useInterleavedMapping;
     int m_reqFIFOSize, m_respFIFOSize;
+    int m_cacheWordsPerPE;
 
     MemorySystem * m_memorySystem;
     sc_fifo<MemoryOperation *> * m_requestFIFO;

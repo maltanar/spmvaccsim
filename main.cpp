@@ -27,12 +27,16 @@ int sc_main(int argc, char **argv)
     QCommandLineOption useInterleavedOption("i", "Use interleaved mapping");
     QCommandLineOption maxOutstandingReqOption("o", "Maximum outstanding requests from each PE", "maxoutstanding", "1");
     QCommandLineOption verboseDRAMSimOption("V", "Verbose DRAMsim");
+    QCommandLineOption cacheModeOption("c", "Cache mode (0 -> none, 1 -> DM, 2 -> 2 way, 3 -> 4 way", "cachemode", "0");
+    QCommandLineOption cacheSizeOption("s", "Cache size per PE, in number of elements", "cachesize", "128");
     QCommandLineOption dramSimOverrideOption("x", "DRAMSim option override, e.g -x TOTAL_ROW_ACCESSES=1", "override", "");
 
     parser.addOption(peCountOption);
     parser.addOption(spmOption);
     parser.addOption(useInterleavedOption);
     parser.addOption(maxOutstandingReqOption);
+    parser.addOption(cacheModeOption);
+    parser.addOption(cacheSizeOption);
     parser.addOption(verboseDRAMSimOption);
     parser.addOption(dramSimOverrideOption);
 
@@ -40,6 +44,8 @@ int sc_main(int argc, char **argv)
 
     int peCount = parser.value(peCountOption).toInt();
     int maxOutstandingReqs = parser.value(maxOutstandingReqOption).toInt();
+    CacheMode cacheMode = (CacheMode) parser.value(cacheModeOption).toInt();
+    int cachePerPE = parser.value(cacheSizeOption).toInt();
     QString spm = parser.value(spmOption);
     bool useInterleaved = parser.isSet(useInterleavedOption);
 
@@ -74,7 +80,8 @@ int sc_main(int argc, char **argv)
         peCount = 1;
     }
 
-    SpMVOCMSimulation sim(spm, peCount, maxOutstandingReqs, cacheModeNone, useInterleaved, memsysOverrides);
+
+    SpMVOCMSimulation sim(spm, peCount, maxOutstandingReqs, cacheMode, cachePerPE, useInterleaved, memsysOverrides);
 
     sim.run();
 

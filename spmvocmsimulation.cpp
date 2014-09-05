@@ -3,7 +3,7 @@
 #include "spmvoperation.h"
 #include "spmvocmsimulation.h"
 
-SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE, CacheMode cacheMode, bool useInterleavedMapping, QMap<QString, QString> memsysOverrides) :
+SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE, CacheMode cacheMode, uint64_t cacheWordsPerPE, bool useInterleavedMapping, QMap<QString, QString> memsysOverrides) :
     sc_module(sc_module_name("top"))
 {
     // tone down the SystemC verbosity
@@ -20,6 +20,7 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
     m_maxOutstandingMemReqsPerPE = maxOutstandingMemReqsPerPE;
     m_cacheMode = cacheMode;
     m_useInterleavedMapping = useInterleavedMapping;
+    m_cacheWordsPerPE = cacheWordsPerPE;
 
     // instantiate the memory system simulator (DRAMsim)
     m_requestFIFO = new sc_fifo<MemoryOperation *>(m_reqFIFOSize);
@@ -36,7 +37,7 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
         sc_fifo<MemoryOperation *> * newRespFIFO = new sc_fifo<MemoryOperation *>(m_respFIFOSize);
         m_memorySystem->setResponseFIFO(i, newRespFIFO);
 
-        ProcessingElement * newPE = new ProcessingElement("pe", i, m_maxOutstandingMemReqsPerPE, cacheMode, this);
+        ProcessingElement * newPE = new ProcessingElement("pe", i, m_maxOutstandingMemReqsPerPE, m_cacheWordsPerPE, cacheMode, this);
 
         newPE->setRequestFIFO(m_requestFIFO);
         newPE->setResponseFIFO(newRespFIFO);
@@ -85,7 +86,8 @@ void SpMVOCMSimulation::signalFinishedPE(int peID)
         for(int i = 0; i < m_peCount; i++)
         {
             ProcessingElement * pe = m_processingElements[i];
-            qDebug() << "PE #" << i << " : \t\t" <<  pe->getCyclesWithResponse() << (float)(pe->getCyclesWithResponse())/(float)totalCycles << pe->getAverageMemLatency() / PE_CLOCK_CYCLE;
+            qDebug() << "PE #" << i << " : \t\t" <<  pe->getCyclesWithResponse() << (float)(pe->getCyclesWithResponse())/(float)totalCycles << pe->getAverageMemLatency() / PE_CLOCK_CYCLE
+                        << "\t" << pe->getCacheHits() << pe->getCacheMisses() << (float)pe->getCacheHits()/(float)(pe->getCacheHits()+pe->getCacheMisses());
         }
     }
 }

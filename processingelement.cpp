@@ -1,6 +1,8 @@
+#include <QSet>
+#include <QDebug>
 #include "processingelement.h"
 
-ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, CacheMode cacheMode, SpMVOCMSimulation *parentSim) :
+ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation *parentSim) :
     sc_module(name)
 {
     m_parentSim = parentSim;
@@ -10,12 +12,13 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     m_maxOutstandingRequests = maxOutstandingRequests;
 
     // TODO make total cache size configurable
-    setupCache(cacheMode, 512*1024);
+    setupCache(cacheMode, cacheWordsTotal);
 
     m_cyclesWithRequest = 0;
     m_cyclesWithResponse = 0;
     m_memLatencySamples = 0;
     m_memLatencySum = sc_time(0, SC_NS);
+    m_cacheHits = m_cacheMisses = 0;
 
     SC_THREAD(sendReadRequests);
     // TODO add thread for writes, they behave differently (no need to wait on result)
@@ -24,6 +27,39 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
 void ProcessingElement::setAccessedElementList(QList<quint32> list)
 {
     m_vectorIndexList = list;
+    // generate set of unique indices
+    QSet<VectorIndex> uniqueInds = list.toSet();
+    qDebug() << "created set";
+    VectorIndex ind;
+    int * alivenessChanges = new int[list.size()];
+    memset(alivenessChanges,0,sizeof(int)*list.size());
+
+    // build a sorted map structure that contains the start/end locations
+    // of each unique index
+    foreach(ind, uniqueInds)
+    {
+        int firstIndex = list.indexOf(ind);
+        int lastIndex = list.lastIndexOf(ind);
+        if(firstIndex != lastIndex)
+        {
+            alivenessChanges[firstIndex] =  +1;
+            alivenessChanges[lastIndex] = -1;
+        }
+    }
+
+    // iterate over the aliveness changes, adding each value as we proceed
+    // and find the maximum sum
+    int maxAlive = 0, alive = 0;
+    for(int i = 0; i < list.size(); i++)
+    {
+        alive += alivenessChanges[i];
+        maxAlive = (maxAlive < alive ? alive : maxAlive);
+        // TODO the total alive at each step can also be exploited if it varies a lot
+    }
+
+    delete [] alivenessChanges;
+
+    // qDebug() << "PE #" << m_peID << " maxAlive = " << maxAlive;
 }
 
 void ProcessingElement::setRequestFIFO(sc_fifo<MemoryOperation *> *fifo)
@@ -61,19 +97,33 @@ void ProcessingElement::sendReadRequests()
             // TODO move this to outside the if for multiple requests per cycle
             // and use a flag
             m_cyclesWithResponse++;
+
+            // this was a cache miss, add it to the cache
+            cacheAdd((VectorIndex) op->address);
         }
 
         // add new request if possible
         if(requestsInFlight < m_maxOutstandingRequests && m_requests->num_free() > 0
                 && elementsLeft && currentIndex < m_vectorIndexList.size())
         {
-            m_requests->write(makeReadRequest(m_peID, (quint64) m_vectorIndexList[currentIndex]));
-            currentIndex++;
-            requestsInFlight++;
+            // send out request only on cache miss
+            if(!cacheCheck(m_vectorIndexList[currentIndex]))
+            {
+                MemoryOperation * op = makeReadRequest(m_peID, (quint64) m_vectorIndexList[currentIndex]);
+                m_requests->write(op);
+                requestsInFlight++;
 
-            // TODO move this to outside the if for multiple requests per cycle
-            // and use a flag
-            m_cyclesWithRequest++;
+                // TODO move this to outside the if for multiple requests per cycle
+                // and use a flag
+                m_cyclesWithRequest++;
+            }
+            else
+            {
+                elementsLeft--;
+            }
+
+            currentIndex++;
+
         }
 
         wait(PE_CLOCK_CYCLE);
@@ -98,9 +148,20 @@ sc_time ProcessingElement::getAverageMemLatency()
     return m_memLatencySum / m_memLatencySamples;
 }
 
+uint64_t ProcessingElement::getCacheMisses()
+{
+    return m_cacheMisses;
+}
+
+uint64_t ProcessingElement::getCacheHits()
+{
+    return m_cacheHits;
+}
+
 void ProcessingElement::setupCache(CacheMode cacheMode, uint64_t totalSizeInWords)
 {
     m_cacheMode = cacheMode;
+    m_cacheTotalWords = totalSizeInWords;
 
     // number of sets depends on cache mode
     switch(m_cacheMode)
@@ -129,20 +190,22 @@ void ProcessingElement::setupCache(CacheMode cacheMode, uint64_t totalSizeInWord
     CacheEntry emptyEntry;
     emptyEntry.index = 0;
     emptyEntry.valid = false;
+
+    ReplacementQueue replQueue;
+    for(int i = 0; i < m_numCacheSetCount; i++)
+        replQueue.append(i);
+
+
     for(int i = 0; i < m_numCacheSetSize; i++)
     {
         set.append(emptyEntry);
+        m_cacheLRUEntry.append(replQueue);
     }
-    ReplacementQueue replQueue;
-    replQueue.append(0);
-    replQueue.append(1);
-    replQueue.append(2);
-    replQueue.append(3);
+
 
     for(int i = 0; i < m_numCacheSetCount; i++)
     {
         m_cacheSets.append(set);
-        m_cacheLRUEntry.append(replQueue);
     }
 }
 
@@ -161,9 +224,12 @@ bool ProcessingElement::cacheCheck(VectorIndex index)
             // update LRU entry -- move set to end of queue
             m_cacheLRUEntry[mappedIndex].removeAll(set);
             m_cacheLRUEntry[mappedIndex].append(set);
+            m_cacheHits++;
             return true;
         }
     }
+
+    m_cacheMisses++;
 
     return false;
 }
@@ -176,9 +242,9 @@ void ProcessingElement::cacheAdd(quint32 index)
     VectorIndex mappedIndex = index % m_numCacheSetSize;
 
     int victimSet = m_cacheLRUEntry[mappedIndex].takeFirst();
-    // update LRU entry -- move set to end of queue
+    // evict the victim entry
     m_cacheSets[victimSet][mappedIndex].index = index;
     m_cacheSets[victimSet][mappedIndex].valid = true;
-
+    // update LRU entry -- move set to end of queue
     m_cacheLRUEntry[mappedIndex].append(victimSet);
 }
