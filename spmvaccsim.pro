@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = spmv-ocm-sim
+TARGET = spmvaccsim
 TEMPLATE = app
 
 DEFINES += NO_STORAGE
