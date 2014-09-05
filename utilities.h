@@ -9,6 +9,7 @@
 #define     PE_CLOCK_CYCLE      sc_time(10, SC_NS)
 #define     MEMC_CLOCK_CYCLE    sc_time(3, SC_NS)
 #define     PE_TICKS_PER_SECOND (uint64_t)(sc_time(1000, SC_MS)/PE_CLOCK_CYCLE)
+#define     INI_CONFIG_DIR      "/home/maltanar/sandbox/spmvaccsim/ini"
 
 QString getMatrixFilename(QString matrixName);
 QMap<QString, QString> getDefaultDRAMSimConfig();

@@ -10,8 +10,8 @@ uint64_t MemorySystem::m_powerSamples;
 
 MemorySystem::MemorySystem(sc_module_name name, QMap<QString, QString> configOverrides) : sc_module(name)
 {
-    m_dramPartFile = "ini/DDR2_micron_16M_8b_x8_sg3E.ini";
-    m_systemConfigFile = "ini/system.ini";
+    m_dramPartFile = "DDR2_micron_16M_8b_x8_sg3E.ini";
+    m_systemConfigFile = "system.ini";
     m_megsOfMemory = 512;
 
     // TODO set MEMC_CLOCK_CYCLE according to selected DRAM part - set to constant 3 ns for now
@@ -28,7 +28,7 @@ MemorySystem::MemorySystem(sc_module_name name, QMap<QString, QString> configOve
 
     // create the DRAMSim2 memory system instance
     m_DRAMSim = getMemorySystemInstance(m_dramPartFile.toStdString(), m_systemConfigFile.toStdString(),
-                                        "/home/maltanar/Desktop/spmv-ocm-sim", "example_app", m_megsOfMemory, NULL, &overrideStdMap);
+                                        INI_CONFIG_DIR, "example_app", m_megsOfMemory, NULL, &overrideStdMap);
 
     m_readCB = new Callback<MemorySystem, void, unsigned, uint64_t, uint64_t>(this, &MemorySystem::readComplete);
     m_writeCB = new Callback<MemorySystem, void, unsigned, uint64_t, uint64_t>(this, &MemorySystem::writeComplete);
