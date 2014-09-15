@@ -31,6 +31,7 @@ protected:
     sc_fifo<MemoryOperation *> * m_requests;
     sc_fifo<MemoryOperation *> * m_responses;
     int m_peID, m_maxOutstandingRequests;
+    int m_maxAlive;
     // to notify parent when we are finished
     SpMVOCMSimulation * m_parentSim;
 
@@ -42,6 +43,7 @@ protected:
     typedef QList<int> ReplacementQueue;
     QList<CacheSet> m_cacheSets;
     QList<ReplacementQueue> m_cacheLRUEntry;
+    VectorIndex m_streamBufferHeadPos;
     void setupCache(CacheMode cacheMode, uint64_t totalSizeInWords);
     bool cacheCheck(VectorIndex index);
     void cacheAdd(VectorIndex index);

@@ -10,6 +10,8 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     m_responses = NULL;
     m_peID = peID;
     m_maxOutstandingRequests = maxOutstandingRequests;
+    m_streamBufferHeadPos = 0;
+    m_maxAlive = 0;
 
     // TODO make total cache size configurable
     setupCache(cacheMode, cacheWordsTotal);
@@ -27,13 +29,18 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
 void ProcessingElement::setAccessedElementList(QList<quint32> list)
 {
     m_vectorIndexList = list;
+
+    if(m_cacheMode != cacheModeStreamBuffer)
+        return;
+
     // generate set of unique indices
     QSet<VectorIndex> uniqueInds = list.toSet();
     qDebug() << "created set";
-    VectorIndex ind;
+    VectorIndex ind, minIndex = list[0];
     int * alivenessChanges = new int[list.size()];
     memset(alivenessChanges,0,sizeof(int)*list.size());
 
+    int singleUseValues = 0;
     // build a sorted map structure that contains the start/end locations
     // of each unique index
     foreach(ind, uniqueInds)
@@ -44,22 +51,35 @@ void ProcessingElement::setAccessedElementList(QList<quint32> list)
         {
             alivenessChanges[firstIndex] =  +1;
             alivenessChanges[lastIndex] = -1;
-        }
+        } else
+            singleUseValues++;
+        // find the min index (initial value of stream buffer head)
+        minIndex = (ind < minIndex ? ind : minIndex);
     }
 
     // iterate over the aliveness changes, adding each value as we proceed
     // and find the maximum sum
-    int maxAlive = 0, alive = 0;
+    int alive = 0;
     for(int i = 0; i < list.size(); i++)
     {
         alive += alivenessChanges[i];
-        maxAlive = (maxAlive < alive ? alive : maxAlive);
-        // TODO the total alive at each step can also be exploited if it varies a lot
+        m_maxAlive = (m_maxAlive < alive ? alive : m_maxAlive);
+        // TODO the total aliveness at each step can also be exploited if it varies a lot
     }
+
+    // TODO should we add 1 to the maxAlive to account for the single-use values?
 
     delete [] alivenessChanges;
 
-    // qDebug() << "PE #" << m_peID << " maxAlive = " << maxAlive;
+    qDebug() << "PE #" << m_peID << " maxAlive = " << m_maxAlive;
+    if(singleUseValues)
+        qDebug() << singleUseValues << " single use values";
+
+    if(m_cacheMode == cacheModeStreamBuffer && m_maxAlive > m_cacheTotalWords)
+    {
+        qDebug() << "error: not enough memory in PE#" << m_peID << " to use stream buffer scheme";
+        qDebug() << "max alive = " << m_maxAlive << ", available = " << m_cacheTotalWords;
+    }
 }
 
 void ProcessingElement::setRequestFIFO(sc_fifo<MemoryOperation *> *fifo)

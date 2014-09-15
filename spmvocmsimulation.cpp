@@ -13,6 +13,12 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
     m_reqFIFOSize = 32;
     m_respFIFOSize = 32;
 
+    if(cacheMode == cacheModeStreamBuffer && useInterleavedMapping)
+    {
+        qDebug() << "error: interleaved mapping is not supported for stream buffer scheme yet";
+        return;
+    }
+
     // TODO use the maxOutstandingMemReqsPerPE and cacheMode params as well
 
     m_matrixName = matrixName;
@@ -81,6 +87,9 @@ void SpMVOCMSimulation::signalFinishedPE(int peID)
         totalCycles = sc_time_stamp() / PE_CLOCK_CYCLE;
         sc_stop();
 
+        qDebug() << totalCycles;
+
+        /*
         qDebug() << "total cycles " << totalCycles;
         // TODO control the dumping of these statistics
         for(int i = 0; i < m_peCount; i++)
@@ -89,6 +98,7 @@ void SpMVOCMSimulation::signalFinishedPE(int peID)
             qDebug() << "PE #" << i << " : \t\t" <<  pe->getCyclesWithResponse() << (float)(pe->getCyclesWithResponse())/(float)totalCycles << pe->getAverageMemLatency() / PE_CLOCK_CYCLE
                         << "\t" << pe->getCacheHits() << pe->getCacheMisses() << (float)pe->getCacheHits()/(float)(pe->getCacheHits()+pe->getCacheMisses());
         }
+        */
     }
 }
 

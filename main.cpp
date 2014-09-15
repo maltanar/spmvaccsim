@@ -27,7 +27,7 @@ int sc_main(int argc, char **argv)
     QCommandLineOption useInterleavedOption("i", "Use interleaved mapping");
     QCommandLineOption maxOutstandingReqOption("o", "Maximum outstanding requests from each PE", "maxoutstanding", "1");
     QCommandLineOption verboseDRAMSimOption("V", "Verbose DRAMsim");
-    QCommandLineOption cacheModeOption("c", "Cache mode (0 -> none, 1 -> DM, 2 -> 2 way, 3 -> 4 way", "cachemode", "0");
+    QCommandLineOption cacheModeOption("c", "Cache mode (0 -> none, 1 -> DM, 2 -> 2 way, 3 -> 4 way, 4 -> stream buffer", "cachemode", "0");
     QCommandLineOption cacheSizeOption("s", "Cache size per PE, in number of elements", "cachesize", "128");
     QCommandLineOption dramSimOverrideOption("x", "DRAMSim option override, e.g -x TOTAL_ROW_ACCESSES=1", "override", "");
 
@@ -85,8 +85,11 @@ int sc_main(int argc, char **argv)
 
     sim.run();
 
+    /*
+    // TODO control the dumping of these statistics
     qDebug() << sim.getAverageLatency();
     qDebug() << sim.getAveragePowerActPre() << sim.getAveragePowerBackground() << sim.getAveragePowerBurst() << sim.getAveragePowerRefresh();
+    */
 
 
     return 0;
