@@ -85,12 +85,7 @@ int sc_main(int argc, char **argv)
 
     sim.run();
 
-    /*
-    // TODO control the dumping of these statistics
-    qDebug() << sim.getAverageLatency();
-    qDebug() << sim.getAveragePowerActPre() << sim.getAveragePowerBackground() << sim.getAveragePowerBurst() << sim.getAveragePowerRefresh();
-    */
-
+    sim.saveStatisticsToDB("results.db");
 
     return 0;
 }

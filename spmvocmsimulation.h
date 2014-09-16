@@ -24,6 +24,8 @@ public:
     double getAveragePowerRefresh();
     double getAveragePowerActPre();
 
+    void saveStatisticsToDB(QString dbName);
+
 protected:
     QString m_matrixName;
     int m_peCount, m_maxOutstandingMemReqsPerPE;
@@ -37,6 +39,9 @@ protected:
     QList<ProcessingElement *> m_processingElements;
     QList<sc_fifo<MemoryOperation *> *> m_responseFIFOs;
     QList<bool> m_finished;
+
+    // statistics
+    quint64 m_totalCycles;
 
 
 };

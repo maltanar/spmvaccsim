@@ -3,6 +3,11 @@
 #include "spmvoperation.h"
 #include "spmvocmsimulation.h"
 
+// includes for dumping data to the database
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+
 SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE, CacheMode cacheMode, uint64_t cacheWordsPerPE, bool useInterleavedMapping, QMap<QString, QString> memsysOverrides) :
     sc_module(sc_module_name("top"))
 {
@@ -12,6 +17,7 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
 
     m_reqFIFOSize = 32;
     m_respFIFOSize = 32;
+    m_totalCycles = 0;
 
     if(cacheMode == cacheModeStreamBuffer && useInterleavedMapping)
     {
@@ -74,20 +80,19 @@ SpMVOCMSimulation::~SpMVOCMSimulation()
 void SpMVOCMSimulation::run()
 {
     sc_start();
+
+    qDebug() << "hello world";
 }
 
 void SpMVOCMSimulation::signalFinishedPE(int peID)
 {
-    uint64_t totalCycles = 0;
     m_finished[peID] = true;
 
     if(m_finished.count(true) == m_peCount)
     {
         // all PEs finished
-        totalCycles = sc_time_stamp() / PE_CLOCK_CYCLE;
+        m_totalCycles = sc_time_stamp() / PE_CLOCK_CYCLE;
         sc_stop();
-
-        qDebug() << totalCycles;
 
         /*
         qDebug() << "total cycles " << totalCycles;
@@ -125,4 +130,44 @@ double SpMVOCMSimulation::getAveragePowerRefresh()
 double SpMVOCMSimulation::getAveragePowerActPre()
 {
     return m_memorySystem->getAveragePowerActPre();
+}
+
+void SpMVOCMSimulation::saveStatisticsToDB(QString dbName)
+{
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(dbName);
+
+    if(!db.open())
+    {
+        qDebug() << "failed to open DB: " << db.lastError();
+        return;
+    }
+
+    QSqlQuery q;
+    bool ret = q.exec("CREATE TABLE IF NOT EXISTS results (  id INTEGER PRIMARY KEY, matrix VARCHAR(30), pecount INTEGER, "
+                      "outstandingReqs INTEGER, cachemode INTEGER, cachePerPE INTEGER, totalCycles INTEGER, avgMemRespLatency REAL,"
+                      "avgPowerBkg REAL, avgPowerBurst REAL, avgPowerRefresh REAL, avgPowerActPre REAL )");
+
+    if (!ret)
+        qDebug() << "Error while creating table: " << q.lastError();
+
+    q.prepare("INSERT INTO results (matrix, pecount, outstandingReqs, cachemode, cachePerPE, totalCycles, avgMemRespLatency, avgPowerBkg, avgPowerBurst, avgPowerRefresh, avgPowerActPre)"
+              "VALUES (:matrix, :pecount, :outstandingReqs, :cachemode, :cachePerPE, :totalCycles, :avgMemRespLatency, :avgPowerBkg, :avgPowerBurst, :avgPowerRefresh, :avgPowerActPre)");
+
+    q.bindValue(":matrix", m_matrixName);
+    q.bindValue(":pecount", m_peCount);
+    q.bindValue(":outstandingReqs", m_maxOutstandingMemReqsPerPE);
+    q.bindValue(":cachemode", m_cacheMode);
+    q.bindValue(":cachePerPE", m_cacheWordsPerPE);
+    q.bindValue(":totalCycles", m_totalCycles);
+    q.bindValue(":avgMemRespLatency", getAverageLatency() );
+    q.bindValue(":avgPowerBkg", getAveragePowerBackground() );
+    q.bindValue(":avgPowerBurst", getAveragePowerBurst() );
+    q.bindValue(":avgPowerRefresh", getAveragePowerRefresh() );
+    q.bindValue(":avgPowerActPre", getAveragePowerActPre() );
+
+    if(!q.exec())
+        qDebug() << "error while executing query: " << q.lastError();
+
+    db.close();
 }
