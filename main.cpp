@@ -30,6 +30,7 @@ int sc_main(int argc, char **argv)
     QCommandLineOption cacheModeOption("c", "Cache mode (0 -> none, 1 -> DM, 2 -> 2 way, 3 -> 4 way, 4 -> stream buffer", "cachemode", "0");
     QCommandLineOption cacheSizeOption("s", "Cache size per PE, in number of elements", "cachesize", "128");
     QCommandLineOption dramSimOverrideOption("x", "DRAMSim option override, e.g -x TOTAL_ROW_ACCESSES=1", "override", "");
+    QCommandLineOption databaseNameOption("d", "Name of sqlite database to dump results into", "db", "results.db");
 
     parser.addOption(peCountOption);
     parser.addOption(spmOption);
@@ -39,6 +40,7 @@ int sc_main(int argc, char **argv)
     parser.addOption(cacheSizeOption);
     parser.addOption(verboseDRAMSimOption);
     parser.addOption(dramSimOverrideOption);
+    parser.addOption(databaseNameOption);
 
     parser.process(app);
 
@@ -48,6 +50,7 @@ int sc_main(int argc, char **argv)
     int cachePerPE = parser.value(cacheSizeOption).toInt();
     QString spm = parser.value(spmOption);
     bool useInterleaved = parser.isSet(useInterleavedOption);
+    QString databaseName = parser.value(databaseNameOption);
 
     QMap<QString, QString> memsysOverrides;
     QString overrideString;
@@ -85,7 +88,7 @@ int sc_main(int argc, char **argv)
 
     sim.run();
 
-    sim.saveStatisticsToDB("results.db");
+    sim.saveStatisticsToDB(databaseName);
 
     return 0;
 }
