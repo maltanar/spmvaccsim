@@ -268,3 +268,8 @@ void ProcessingElement::cacheAdd(quint32 index)
     // update LRU entry -- move set to end of queue
     m_cacheLRUEntry[mappedIndex].append(victimSet);
 }
+
+int ProcessingElement::getAssignedElemCount()
+{
+    return m_vectorIndexList.size();
+}

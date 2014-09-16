@@ -80,8 +80,6 @@ SpMVOCMSimulation::~SpMVOCMSimulation()
 void SpMVOCMSimulation::run()
 {
     sc_start();
-
-    qDebug() << "hello world";
 }
 
 void SpMVOCMSimulation::signalFinishedPE(int peID)
@@ -143,15 +141,12 @@ void SpMVOCMSimulation::saveStatisticsToDB(QString dbName)
         return;
     }
 
+    createDBTables();
+
     QSqlQuery q;
-    bool ret = q.exec("CREATE TABLE IF NOT EXISTS results (  id INTEGER PRIMARY KEY, matrix VARCHAR(30), pecount INTEGER, "
-                      "outstandingReqs INTEGER, cachemode INTEGER, cachePerPE INTEGER, totalCycles INTEGER, avgMemRespLatency REAL,"
-                      "avgPowerBkg REAL, avgPowerBurst REAL, avgPowerRefresh REAL, avgPowerActPre REAL )");
 
-    if (!ret)
-        qDebug() << "Error while creating table: " << q.lastError();
-
-    q.prepare("INSERT INTO results (matrix, pecount, outstandingReqs, cachemode, cachePerPE, totalCycles, avgMemRespLatency, avgPowerBkg, avgPowerBurst, avgPowerRefresh, avgPowerActPre)"
+    // create the global (average) results entry
+    q.prepare("INSERT INTO avgResults (matrix, pecount, outstandingReqs, cachemode, cachePerPE, totalCycles, avgMemRespLatency, avgPowerBkg, avgPowerBurst, avgPowerRefresh, avgPowerActPre) "
               "VALUES (:matrix, :pecount, :outstandingReqs, :cachemode, :cachePerPE, :totalCycles, :avgMemRespLatency, :avgPowerBkg, :avgPowerBurst, :avgPowerRefresh, :avgPowerActPre)");
 
     q.bindValue(":matrix", m_matrixName);
@@ -167,7 +162,50 @@ void SpMVOCMSimulation::saveStatisticsToDB(QString dbName)
     q.bindValue(":avgPowerActPre", getAveragePowerActPre() );
 
     if(!q.exec())
-        qDebug() << "error while executing query: " << q.lastError();
+        qDebug() << "Error while executing avgResults query: " << q.lastError();
+
+    QVariant resultId = q.lastInsertId();
+
+    // add per-PE results
+    q.prepare("INSERT INTO perPEResults (expId, peId, numElements, cyclesWithResponse, cacheHits, avgMemLatency) VALUES "
+              "(:expId, :peId, :numElements, :cyclesWithResponse, :cacheHits, :avgMemLatency)");
+
+
+    for(int i = 0; i < m_peCount; i++)
+    {
+        ProcessingElement * pe = m_processingElements[i];
+
+        q.bindValue(":expId", resultId);
+        q.bindValue(":peId", i);
+        q.bindValue(":numElements", pe->getAssignedElemCount());
+        q.bindValue(":cyclesWithResponse", (quint64) pe->getCyclesWithResponse());
+        q.bindValue(":cacheHits", (quint64) pe->getCacheHits());
+        q.bindValue(":avgMemLatency", pe->getAverageMemLatency() / PE_CLOCK_CYCLE);
+
+        if(!q.exec())
+            qDebug() << "error while executing perPEResults query: " << q.lastError();
+
+    }
 
     db.close();
+
+    qDebug() << "Experiment saved into database with ID #" << resultId.toInt();
+}
+
+void SpMVOCMSimulation::createDBTables()
+{
+    QSqlQuery q;
+
+    bool ret = q.exec("CREATE TABLE IF NOT EXISTS avgResults (  id INTEGER PRIMARY KEY, matrix VARCHAR(30), pecount INTEGER, "
+                      "outstandingReqs INTEGER, cachemode INTEGER, cachePerPE INTEGER, totalCycles INTEGER, avgMemRespLatency REAL,"
+                      "avgPowerBkg REAL, avgPowerBurst REAL, avgPowerRefresh REAL, avgPowerActPre REAL )");
+
+    if (!ret)
+        qDebug() << "Error while creating average results table: " << q.lastError();
+
+    ret = q.exec("CREATE TABLE IF NOT EXISTS perPEResults ( id INTEGER PRIMARY KEY, expId INTEGER, peId INTEGER, numElements INTEGER, "
+                 "cyclesWithResponse INTEGER, cacheHits INTEGER, avgMemLatency REAL)");
+
+    if (!ret)
+        qDebug() << "Error while creating per-PE results table: " << q.lastError();
 }

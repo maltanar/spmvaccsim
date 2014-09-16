@@ -20,6 +20,7 @@ public:
     void sendReadRequests();
 
     // statistics
+    int getAssignedElemCount();
     uint64_t getCyclesWithResponse();
     uint64_t getCyclesWithRequest();
     sc_time getAverageMemLatency();

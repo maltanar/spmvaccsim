@@ -3,6 +3,7 @@
 
 #include <systemc.h>
 #include <QMap>
+#include <QSqlDatabase>
 #include "memorysystem.h"
 #include "processingelement.h"
 
@@ -39,6 +40,8 @@ protected:
     QList<ProcessingElement *> m_processingElements;
     QList<sc_fifo<MemoryOperation *> *> m_responseFIFOs;
     QList<bool> m_finished;
+
+    void createDBTables();
 
     // statistics
     quint64 m_totalCycles;
