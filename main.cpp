@@ -2,8 +2,6 @@
 #include <QFile>
 #include <QDebug>
 #include <QMap>
-#include "mainwindow.h"
-#include <QApplication>
 #include <systemc.h>
 
 #include "spmvocmsimulation.h"

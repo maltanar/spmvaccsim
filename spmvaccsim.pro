@@ -4,9 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core sql
 
 TARGET = spmvaccsim
 TEMPLATE = app
@@ -14,7 +12,6 @@ TEMPLATE = app
 DEFINES += NO_STORAGE
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
     spmvoperation.cpp \
     utilities.cpp \
     processingelement.cpp \
@@ -34,8 +31,7 @@ SOURCES += main.cpp\
     DRAMSim2/Transaction.cpp \
     spmvocmsimulation.cpp
 
-HEADERS  += mainwindow.h \
-    spmvoperation.h \
+HEADERS  += spmvoperation.h \
     utilities.h \
     processingelement.h \
     memorysystem.h \
@@ -58,8 +54,6 @@ HEADERS  += mainwindow.h \
     DRAMSim2/SystemConfiguration.h \
     DRAMSim2/Transaction.h \
     spmvocmsimulation.h
-
-FORMS    += mainwindow.ui
 
 SYSTEMC_ROOT = /home/maltanar/systemc
 SYSTEMC_ARCH = linux64
