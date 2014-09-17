@@ -36,14 +36,19 @@ SpMVOperation::~SpMVOperation()
 QList<VectorIndex> SpMVOperation::getDVAccessPattern(quint32 peID, quint32 peCount)
 {
     // TODO we don't handle corner cases (uneven division for given PE count) here
-    // TODO distribute nonzeroes  according to row lengths (they are not uniform)
-    quint32 elementsPerPE = m_nzCount / peCount;
+    // calculate the assigned NZ range for this PE based on the assigned rows
+    quint32 rowsPerPE = m_rowCount / peCount;
+    quint32 startRow = peID * rowsPerPE, endRow = (peID + 1) * rowsPerPE;
     QList<VectorIndex> indices;
 
-    for(quint32 i = 0; i < elementsPerPE; i++)
+    for(quint32 i = startRow; i < endRow; i++)
     {
-        indices.push_back(m_colIndices[peID*elementsPerPE + i]);
+        for(quint32 j = m_rowPointers[i]; j < m_rowPointers[i+1]; j++)
+            indices.push_back(m_colIndices[j]);
     }
+
+    // TODO a better way of distribution is to try to match a number of rows
+    // containing NNZ/n elements
 
     return indices;
 }

@@ -97,9 +97,8 @@ void ProcessingElement::sendReadRequests()
 {
     VectorIndex elementsLeft = m_vectorIndexList.size(), currentIndex = 0;
     int rowsLeft = m_rowLenList.size(), currentRow = 0, elementsInRow = m_rowLenList[currentRow];
-    qDebug() << m_peID << " has " << rowsLeft << " rows";
+
     int requestsInFlight = 0;
-    int rowLenSum = 0; // TODO remove me
 
     while(elementsLeft > 0)
     {
@@ -129,7 +128,6 @@ void ProcessingElement::sendReadRequests()
             elementsInRow--;
             if(elementsInRow == 0)
             {
-                rowLenSum += m_rowLenList[currentRow];
                 rowsLeft--;
                 if(rowsLeft)
                 {
@@ -137,6 +135,7 @@ void ProcessingElement::sendReadRequests()
                     elementsInRow = m_rowLenList[currentRow];
                 }
             }
+            // TODO issue other reads to matrix data
         }
 
         // add new request if possible
@@ -168,7 +167,6 @@ void ProcessingElement::sendReadRequests()
 
     // notify parent that we are finished
     m_parentSim->signalFinishedPE(m_peID);
-    qDebug() << m_peID << "\t" << rowLenSum;
 }
 
 uint64_t ProcessingElement::getCyclesWithResponse()
