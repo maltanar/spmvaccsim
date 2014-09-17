@@ -19,12 +19,14 @@ public:
     quint32 nzCount() {return m_nzCount;}
 
     QList<VectorIndex> getDVAccessPattern(quint32 peID, quint32 peCount, bool useInterleavedMapping=false);
+    QList<quint32> getRowLengths(quint32 peID, quint32 peCount, bool useInterleavedMapping=false);
 
 
 protected:
     QString m_matrixName;
     quint32 m_rowCount, m_colCount, m_nzCount;
     quint32 * m_colIndices;
+    quint32 * m_rowPointers;
 
 };
 

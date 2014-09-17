@@ -55,7 +55,8 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
         newPE->setResponseFIFO(newRespFIFO);
 
         // create the access pattern for the PE
-        newPE->setAccessedElementList(spmv->getDVAccessPattern(i, peCount, useInterleavedMapping));
+        newPE->setAccessedElementList(spmv->getDVAccessPattern(i, peCount, useInterleavedMapping),
+                                      spmv->getRowLengths(i, peCount, useInterleavedMapping));
 
         m_responseFIFOs.push_back(newRespFIFO);
         m_processingElements.push_back(newPE);

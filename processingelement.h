@@ -14,7 +14,7 @@ class ProcessingElement : public sc_module
 public:
     ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation * parentSim);
 
-    void setAccessedElementList(QList<VectorIndex> list);
+    void setAccessedElementList(QList<VectorIndex> indList, QList<quint32> rowlenList);
     void setRequestFIFO(sc_fifo<MemoryOperation *> * fifo);
     void setResponseFIFO(sc_fifo<MemoryOperation *> * fifo);
     void sendReadRequests();
@@ -29,6 +29,7 @@ public:
 
 protected:
     QList<VectorIndex> m_vectorIndexList;
+    QList<quint32> m_rowLenList;
     sc_fifo<MemoryOperation *> * m_requests;
     sc_fifo<MemoryOperation *> * m_responses;
     int m_peID, m_maxOutstandingRequests;

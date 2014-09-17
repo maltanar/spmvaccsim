@@ -26,27 +26,28 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     // TODO add thread for writes, they behave differently (no need to wait on result)
 }
 
-void ProcessingElement::setAccessedElementList(QList<quint32> list)
+void ProcessingElement::setAccessedElementList(QList<quint32> indList, QList<quint32> rowlenList)
 {
-    m_vectorIndexList = list;
+    m_vectorIndexList = indList;
+    m_rowLenList = rowlenList;
 
     if(m_cacheMode != cacheModeStreamBuffer)
         return;
 
     // generate set of unique indices
-    QSet<VectorIndex> uniqueInds = list.toSet();
+    QSet<VectorIndex> uniqueInds = indList.toSet();
     qDebug() << "created set";
-    VectorIndex ind, minIndex = list[0];
-    int * alivenessChanges = new int[list.size()];
-    memset(alivenessChanges,0,sizeof(int)*list.size());
+    VectorIndex ind, minIndex = indList[0];
+    int * alivenessChanges = new int[indList.size()];
+    memset(alivenessChanges,0,sizeof(int)*indList.size());
 
     int singleUseValues = 0;
     // build a sorted map structure that contains the start/end locations
     // of each unique index
     foreach(ind, uniqueInds)
     {
-        int firstIndex = list.indexOf(ind);
-        int lastIndex = list.lastIndexOf(ind);
+        int firstIndex = indList.indexOf(ind);
+        int lastIndex = indList.lastIndexOf(ind);
         if(firstIndex != lastIndex)
         {
             alivenessChanges[firstIndex] =  +1;
@@ -60,7 +61,7 @@ void ProcessingElement::setAccessedElementList(QList<quint32> list)
     // iterate over the aliveness changes, adding each value as we proceed
     // and find the maximum sum
     int alive = 0;
-    for(int i = 0; i < list.size(); i++)
+    for(int i = 0; i < indList.size(); i++)
     {
         alive += alivenessChanges[i];
         m_maxAlive = (m_maxAlive < alive ? alive : m_maxAlive);
@@ -95,7 +96,10 @@ void ProcessingElement::setResponseFIFO(sc_fifo<MemoryOperation *> *fifo)
 void ProcessingElement::sendReadRequests()
 {
     VectorIndex elementsLeft = m_vectorIndexList.size(), currentIndex = 0;
+    int rowsLeft = m_rowLenList.size(), currentRow = 0, elementsInRow = m_rowLenList[currentRow];
+    qDebug() << m_peID << " has " << rowsLeft << " rows";
     int requestsInFlight = 0;
+    int rowLenSum = 0; // TODO remove me
 
     while(elementsLeft > 0)
     {
@@ -120,6 +124,19 @@ void ProcessingElement::sendReadRequests()
 
             // this was a cache miss, add it to the cache
             cacheAdd((VectorIndex) op->address);
+
+            // handle end-of-row stuff
+            elementsInRow--;
+            if(elementsInRow == 0)
+            {
+                rowLenSum += m_rowLenList[currentRow];
+                rowsLeft--;
+                if(rowsLeft)
+                {
+                    currentRow++;
+                    elementsInRow = m_rowLenList[currentRow];
+                }
+            }
         }
 
         // add new request if possible
@@ -151,6 +168,7 @@ void ProcessingElement::sendReadRequests()
 
     // notify parent that we are finished
     m_parentSim->signalFinishedPE(m_peID);
+    qDebug() << m_peID << "\t" << rowLenSum;
 }
 
 uint64_t ProcessingElement::getCyclesWithResponse()
