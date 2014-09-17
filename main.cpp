@@ -24,7 +24,6 @@ int sc_main(int argc, char **argv)
 
     QCommandLineOption peCountOption("n", "Number of processing elements", "pecount", "1");
     QCommandLineOption spmOption("m", "Sparse matrix to process", "spm");
-    QCommandLineOption useInterleavedOption("i", "Use interleaved mapping");
     QCommandLineOption maxOutstandingReqOption("o", "Maximum outstanding requests from each PE", "maxoutstanding", "1");
     QCommandLineOption verboseDRAMSimOption("V", "Verbose DRAMsim");
     QCommandLineOption cacheModeOption("c", "Cache mode (0 -> none, 1 -> DM, 2 -> 2 way, 3 -> 4 way, 4 -> stream buffer", "cachemode", "0");
@@ -34,7 +33,7 @@ int sc_main(int argc, char **argv)
 
     parser.addOption(peCountOption);
     parser.addOption(spmOption);
-    parser.addOption(useInterleavedOption);
+    //parser.addOption(useInterleavedOption);
     parser.addOption(maxOutstandingReqOption);
     parser.addOption(cacheModeOption);
     parser.addOption(cacheSizeOption);
@@ -49,7 +48,6 @@ int sc_main(int argc, char **argv)
     CacheMode cacheMode = (CacheMode) parser.value(cacheModeOption).toInt();
     int cachePerPE = parser.value(cacheSizeOption).toInt();
     QString spm = parser.value(spmOption);
-    bool useInterleaved = parser.isSet(useInterleavedOption);
     QString databaseName = parser.value(databaseNameOption);
 
     QMap<QString, QString> memsysOverrides;
@@ -84,7 +82,7 @@ int sc_main(int argc, char **argv)
     }
 
 
-    SpMVOCMSimulation sim(spm, peCount, maxOutstandingReqs, cacheMode, cachePerPE, useInterleaved, memsysOverrides);
+    SpMVOCMSimulation sim(spm, peCount, maxOutstandingReqs, cacheMode, cachePerPE, memsysOverrides);
 
     sim.run();
 

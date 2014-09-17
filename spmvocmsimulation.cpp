@@ -8,7 +8,8 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
-SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE, CacheMode cacheMode, uint64_t cacheWordsPerPE, bool useInterleavedMapping, QMap<QString, QString> memsysOverrides) :
+SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE,
+                                     CacheMode cacheMode, uint64_t cacheWordsPerPE, QMap<QString, QString> memsysOverrides) :
     sc_module(sc_module_name("top"))
 {
     // tone down the SystemC verbosity
@@ -19,19 +20,12 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
     m_respFIFOSize = 32;
     m_totalCycles = 0;
 
-    if(cacheMode == cacheModeStreamBuffer && useInterleavedMapping)
-    {
-        qDebug() << "error: interleaved mapping is not supported for stream buffer scheme yet";
-        return;
-    }
-
     // TODO use the maxOutstandingMemReqsPerPE and cacheMode params as well
 
     m_matrixName = matrixName;
     m_peCount = peCount;
     m_maxOutstandingMemReqsPerPE = maxOutstandingMemReqsPerPE;
     m_cacheMode = cacheMode;
-    m_useInterleavedMapping = useInterleavedMapping;
     m_cacheWordsPerPE = cacheWordsPerPE;
 
     // instantiate the memory system simulator (DRAMsim)
@@ -55,8 +49,8 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
         newPE->setResponseFIFO(newRespFIFO);
 
         // create the access pattern for the PE
-        newPE->setAccessedElementList(spmv->getDVAccessPattern(i, peCount, useInterleavedMapping),
-                                      spmv->getRowLengths(i, peCount, useInterleavedMapping));
+        newPE->setAccessedElementList(spmv->getDVAccessPattern(i, peCount),
+                                      spmv->getRowLengths(i, peCount));
 
         m_responseFIFOs.push_back(newRespFIFO);
         m_processingElements.push_back(newPE);

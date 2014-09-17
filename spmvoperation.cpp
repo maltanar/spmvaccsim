@@ -33,7 +33,7 @@ SpMVOperation::~SpMVOperation()
     delete [] m_rowPointers;
 }
 
-QList<VectorIndex> SpMVOperation::getDVAccessPattern(quint32 peID, quint32 peCount, bool useInterleavedMapping)
+QList<VectorIndex> SpMVOperation::getDVAccessPattern(quint32 peID, quint32 peCount)
 {
     // TODO we don't handle corner cases (uneven division for given PE count) here
     // TODO distribute nonzeroes  according to row lengths (they are not uniform)
@@ -42,16 +42,13 @@ QList<VectorIndex> SpMVOperation::getDVAccessPattern(quint32 peID, quint32 peCou
 
     for(quint32 i = 0; i < elementsPerPE; i++)
     {
-        if(useInterleavedMapping)
-            indices.push_back(m_colIndices[peID + i * peCount]);
-        else
-            indices.push_back(m_colIndices[peID*elementsPerPE + i]);
+        indices.push_back(m_colIndices[peID*elementsPerPE + i]);
     }
 
     return indices;
 }
 
-QList<quint32> SpMVOperation::getRowLengths(quint32 peID, quint32 peCount, bool useInterleavedMapping)
+QList<quint32> SpMVOperation::getRowLengths(quint32 peID, quint32 peCount)
 {
     // TODO we don't handle corner cases (uneven division for given PE count) here
     quint32 rowsPerPE = m_rowCount / peCount;
@@ -59,12 +56,7 @@ QList<quint32> SpMVOperation::getRowLengths(quint32 peID, quint32 peCount, bool 
 
     for(quint32 i = 0; i < rowsPerPE; i++)
     {
-        int row = 0;
-        if(useInterleavedMapping)
-            row = peID + i * peCount;
-        else
-            row = peID*rowsPerPE + i;
-
+        int row = peID*rowsPerPE + i;
         rowLengths.push_back(m_rowPointers[row+1] - m_rowPointers[row]);
     }
 

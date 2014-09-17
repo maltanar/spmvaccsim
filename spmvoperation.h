@@ -18,8 +18,8 @@ public:
     quint32 colCount() {return m_colCount;}
     quint32 nzCount() {return m_nzCount;}
 
-    QList<VectorIndex> getDVAccessPattern(quint32 peID, quint32 peCount, bool useInterleavedMapping=false);
-    QList<quint32> getRowLengths(quint32 peID, quint32 peCount, bool useInterleavedMapping=false);
+    QList<VectorIndex> getDVAccessPattern(quint32 peID, quint32 peCount);
+    QList<quint32> getRowLengths(quint32 peID, quint32 peCount);
 
 
 protected:
