@@ -129,9 +129,11 @@ void ProcessingElement::sendReadRequests()
             freeRequest(op);
         }
 
+        /*
         m_requests->write(makeReadRequest(m_peID, m_rowPtrBase + m_rowPtrStride*currentRow, TAG_ROW_LENGTH));
         m_requests->write(makeReadRequest(m_peID, m_colIndBase + m_colIndStride*currentIndex, TAG_COL_IND));
         m_requests->write(makeReadRequest(m_peID, m_matrixValBase + m_matrixValStride*currentIndex, TAG_MATRIX_VAL));
+        */
 
         // add new request if possible
         if(requestsInFlight < m_maxOutstandingRequests && m_requests->num_free() > 0
