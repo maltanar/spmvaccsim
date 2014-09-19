@@ -16,7 +16,6 @@ public:
     ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation * parentSim);
 
     void assignWork(SpMVOperation * spmv, int peCount);
-    void setAccessedElementList(QList<quint32> indList, QList<quint32> rowlenList);
 
     void setRequestFIFO(sc_fifo<MemoryOperation *> * fifo);
     void setResponseFIFO(sc_fifo<MemoryOperation *> * fifo);
@@ -62,6 +61,9 @@ protected:
     uint64_t m_memLatencySamples;
     sc_time m_memLatencySum;
     uint64_t m_cacheHits, m_cacheMisses;
+
+    // lifetime analysis functions
+    void colLifetimeAnalysis();
 };
 
 #endif // PROCESSINGELEMENT_H

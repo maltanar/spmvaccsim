@@ -54,63 +54,6 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
     m_denseVecStride = sizeof(VectorValue);
 }
 
-void ProcessingElement::setAccessedElementList(QList<quint32> indList, QList<quint32> rowlenList)
-{
-    m_vectorIndexList = indList;
-    m_rowLenList = rowlenList;
-
-    if(m_cacheMode != cacheModeStreamBuffer)
-        return;
-
-    // generate set of unique indices
-    QSet<VectorIndex> uniqueInds = indList.toSet();
-    qDebug() << "created set";
-    VectorIndex ind, minIndex = indList[0];
-    int * alivenessChanges = new int[indList.size()];
-    memset(alivenessChanges,0,sizeof(int)*indList.size());
-
-    int singleUseValues = 0;
-    // build a sorted map structure that contains the start/end locations
-    // of each unique index
-    foreach(ind, uniqueInds)
-    {
-        int firstIndex = indList.indexOf(ind);
-        int lastIndex = indList.lastIndexOf(ind);
-        if(firstIndex != lastIndex)
-        {
-            alivenessChanges[firstIndex] =  +1;
-            alivenessChanges[lastIndex] = -1;
-        } else
-            singleUseValues++;
-        // find the min index (initial value of stream buffer head)
-        minIndex = (ind < minIndex ? ind : minIndex);
-    }
-
-    // iterate over the aliveness changes, adding each value as we proceed
-    // and find the maximum sum
-    int alive = 0;
-    for(int i = 0; i < indList.size(); i++)
-    {
-        alive += alivenessChanges[i];
-        m_maxAlive = (m_maxAlive < alive ? alive : m_maxAlive);
-        // TODO the total aliveness at each step can also be exploited if it varies a lot
-    }
-
-    // TODO should we add 1 to the maxAlive to account for the single-use values?
-
-    delete [] alivenessChanges;
-
-    qDebug() << "PE #" << m_peID << " maxAlive = " << m_maxAlive;
-    if(singleUseValues)
-        qDebug() << singleUseValues << " single use values";
-
-    if(m_cacheMode == cacheModeStreamBuffer && m_maxAlive > m_cacheTotalWords)
-    {
-        qDebug() << "error: not enough memory in PE#" << m_peID << " to use stream buffer scheme";
-        qDebug() << "max alive = " << m_maxAlive << ", available = " << m_cacheTotalWords;
-    }
-}
-
 void ProcessingElement::setRequestFIFO(sc_fifo<MemoryOperation *> *fifo)
 {
     m_requests = fifo;
@@ -311,6 +254,57 @@ void ProcessingElement::cacheAdd(quint32 index)
     m_cacheSets[victimSet][mappedIndex].valid = true;
     // update LRU entry -- move set to end of queue
     m_cacheLRUEntry[mappedIndex].append(victimSet);
+}
+
+void ProcessingElement::colLifetimeAnalysis()
+{
+    // generate set of unique indices
+    QSet<VectorIndex> uniqueInds = m_vectorIndexList.toSet();
+    qDebug() << "created set";
+    VectorIndex ind, minIndex = m_vectorIndexList[0];
+    int * alivenessChanges = new int[m_vectorIndexList.size()];
+    memset(alivenessChanges,0,sizeof(int)*m_vectorIndexList.size());
+
+    int singleUseValues = 0;
+    // build a sorted map structure that contains the start/end locations
+    // of each unique index
+    foreach(ind, uniqueInds)
+    {
+        int firstIndex = m_vectorIndexList.indexOf(ind);
+        int lastIndex = m_vectorIndexList.lastIndexOf(ind);
+        if(firstIndex != lastIndex)
+        {
+            alivenessChanges[firstIndex] =  +1;
+            alivenessChanges[lastIndex] = -1;
+        } else
+            singleUseValues++;
+        // find the min index (initial value of stream buffer head)
+        minIndex = (ind < minIndex ? ind : minIndex);
+    }
+
+    // iterate over the aliveness changes, adding each value as we proceed
+    // and find the maximum sum
+    int alive = 0;
+    for(int i = 0; i < m_vectorIndexList.size(); i++)
+    {
+        alive += alivenessChanges[i];
+        m_maxAlive = (m_maxAlive < alive ? alive : m_maxAlive);
+        // TODO the total aliveness at each step can also be exploited if it varies a lot
+    }
+
+    // TODO should we add 1 to the maxAlive to account for the single-use values?
+
+    delete [] alivenessChanges;
+
+    qDebug() << "PE #" << m_peID << " maxAlive = " << m_maxAlive;
+    if(singleUseValues)
+        qDebug() << singleUseValues << " single use values";
+
+    if(m_cacheMode == cacheModeStreamBuffer && m_maxAlive > m_cacheTotalWords)
+    {
+        qDebug() << "error: not enough memory in PE#" << m_peID << " to use stream buffer scheme";
+        qDebug() << "max alive = " << m_maxAlive << ", available = " << m_cacheTotalWords;
+    }
 }
 
 int ProcessingElement::getAssignedElemCount()
