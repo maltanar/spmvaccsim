@@ -87,7 +87,6 @@ void MemorySystem::readComplete(unsigned id, uint64_t address, uint64_t clock_cy
     // delete the map entry
     m_reqsInFlight.remove(t);
 
-
     op->isResponse = true;
     // TODO return real data to the requesters?
 

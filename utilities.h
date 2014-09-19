@@ -23,6 +23,7 @@ typedef struct {
     quint64 data;
     int origin;
     sc_time latency;
+    int tag;
 } MemoryOperation;
 
 typedef enum {
@@ -33,9 +34,9 @@ typedef enum {
     cacheModeStreamBuffer,
 } CacheMode;
 
-MemoryOperation * makeReadRequest(int origin, quint64 address);
+MemoryOperation * makeReadRequest(int origin, quint64 address, int tag);
 MemoryOperation * makeReadResponse(int origin, quint64 address, quint64 data);
-MemoryOperation * makeWriteRequest(int origin, quint64 address, quint64 data);
+MemoryOperation * makeWriteRequest(int origin, quint64 address, quint64 data, int tag);
 
 void freeRequest(MemoryOperation *req);
 

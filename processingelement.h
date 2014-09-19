@@ -30,6 +30,8 @@ public:
     uint64_t getCacheHits();
 
 protected:
+    quint64 m_peNZCount;
+    VectorIndex m_peRowCount;
     QList<VectorIndex> m_vectorIndexList;
     QList<quint32> m_rowLenList;
     sc_fifo<MemoryOperation *> * m_requests;

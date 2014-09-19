@@ -2,6 +2,11 @@
 #include <QDebug>
 #include "processingelement.h"
 
+#define TAG_VECTOR_DATA     1
+#define TAG_ROW_LENGTH      2
+#define TAG_MATRIX_VAL      3
+#define TAG_COL_IND         4
+
 ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation *parentSim) :
     sc_module(name)
 {
@@ -22,6 +27,8 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     m_memLatencySum = sc_time(0, SC_NS);
     m_cacheHits = m_cacheMisses = 0;
 
+    m_peNZCount = 0;
+    m_peRowCount = 0;
 
     SC_THREAD(sendReadRequests);
     // TODO add thread for writes, they behave differently (no need to wait on result)
@@ -52,6 +59,9 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
     m_matrixValStride = sizeof(VectorValue);
     m_colIndStride = sizeof(VectorIndex);
     m_denseVecStride = sizeof(VectorValue);
+
+    m_peNZCount = m_vectorIndexList.size();
+    m_peRowCount = m_rowLenList.size();
 }
 
 void ProcessingElement::setRequestFIFO(sc_fifo<MemoryOperation *> *fifo)
@@ -66,7 +76,9 @@ void ProcessingElement::setResponseFIFO(sc_fifo<MemoryOperation *> *fifo)
 
 void ProcessingElement::sendReadRequests()
 {
-    VectorIndex elementsLeft = m_vectorIndexList.size(), currentIndex = 0;
+    VectorIndex elementsLeft = m_vectorIndexList.size(), // the "real" progress indicator
+                currentIndex = 0;                       // the element ind we are currently requesting
+
     int rowsLeft = m_rowLenList.size(), currentRow = 0, elementsInRow = m_rowLenList[currentRow];
 
     int requestsInFlight = 0;
@@ -78,36 +90,48 @@ void ProcessingElement::sendReadRequests()
         // handle incoming responses, if any
         if(m_responses->num_available() > 0)
         {
-            // log statistics for this particular request / per-cycle statistics
             MemoryOperation * op = m_responses->read();
-            m_memLatencySum += op->latency;
-            m_memLatencySamples++;
-            freeRequest(op);
-
             // we got response for a request
             requestsInFlight--;
-            elementsLeft--;
 
-            // TODO move this to outside the if for multiple requests per cycle
-            // and use a flag
-            m_cyclesWithResponse++;
-
-            // this was a cache miss, add it to the cache
-            cacheAdd((VectorIndex) op->address);
-
-            // handle end-of-row stuff
-            elementsInRow--;
-            if(elementsInRow == 0)
+            // we are assuming progress is fundamentally limited by the dense vector reads --
+            // so only vector data returns count towards real progress
+            if(op->tag == TAG_VECTOR_DATA)
             {
-                rowsLeft--;
-                if(rowsLeft)
+                m_memLatencySum += op->latency;
+                m_memLatencySamples++;
+
+                // progress!
+                elementsLeft--;
+
+                // TODO this must change if we handle multiple reqs/resps per cycle
+                m_cyclesWithResponse++;
+
+                // this was a cache miss, add it to the cache
+                cacheAdd((VectorIndex) op->address);
+
+                // handle end-of-row stuff
+                elementsInRow--;
+                if(elementsInRow == 0)
                 {
-                    currentRow++;
-                    elementsInRow = m_rowLenList[currentRow];
+                    rowsLeft--;
+                    if(rowsLeft)
+                    {
+                        currentRow++;
+                        elementsInRow = m_rowLenList[currentRow];
+                    }
                 }
             }
-            // TODO issue other reads to matrix data
+
+            // TODO calculate latencies etc for non-vector-index data
+
+            // free up memory
+            freeRequest(op);
         }
+
+        m_requests->write(makeReadRequest(m_peID, m_rowPtrBase + m_rowPtrStride*currentRow, TAG_ROW_LENGTH));
+        m_requests->write(makeReadRequest(m_peID, m_colIndBase + m_colIndStride*currentIndex, TAG_COL_IND));
+        m_requests->write(makeReadRequest(m_peID, m_matrixValBase + m_matrixValStride*currentIndex, TAG_MATRIX_VAL));
 
         // add new request if possible
         if(requestsInFlight < m_maxOutstandingRequests && m_requests->num_free() > 0
@@ -116,7 +140,7 @@ void ProcessingElement::sendReadRequests()
             // send out request only on cache miss
             if(!cacheCheck(m_vectorIndexList[currentIndex]))
             {
-                MemoryOperation * op = makeReadRequest(m_peID, (quint64) m_vectorIndexList[currentIndex]);
+                MemoryOperation * op = makeReadRequest(m_peID, (quint64) m_vectorIndexList[currentIndex], TAG_VECTOR_DATA);
                 m_requests->write(op);
                 requestsInFlight++;
 
