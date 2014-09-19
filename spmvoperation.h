@@ -18,6 +18,9 @@ public:
     quint32 colCount() {return m_colCount;}
     quint32 nzCount() {return m_nzCount;}
 
+    void assignWorkToWorker(quint32 peID, quint32 peCount, VectorIndex & startingRow, quint64 & startingNZ,
+                            QList<VectorIndex> & dvAccessPattern, QList<VectorIndex> & rowLengths);
+
     QList<VectorIndex> getDVAccessPattern(quint32 peID, quint32 peCount);
     QList<quint32> getRowLengths(quint32 peID, quint32 peCount);
 

@@ -22,8 +22,36 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     m_memLatencySum = sc_time(0, SC_NS);
     m_cacheHits = m_cacheMisses = 0;
 
+
     SC_THREAD(sendReadRequests);
     // TODO add thread for writes, they behave differently (no need to wait on result)
+}
+
+void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
+{
+    quint32 startingRow;
+    quint64 startingNZ;
+    spmv->assignWorkToWorker(m_peID, peCount, startingRow, startingNZ, m_vectorIndexList, m_rowLenList);
+
+    // calculate global start addresses for input data
+    // assume SpMV data linearly laid out in memory
+    // TODO support interleaved data mode?
+    quint64 rowPtrStart = 0;
+    quint64 colIndStart = rowPtrStart + sizeof(VectorIndex)*(spmv->rowCount()+1);
+    quint64 matrixValStart = colIndStart + sizeof(VectorIndex)*(spmv->nzCount());
+    quint64 denseVecStart = matrixValStart + sizeof(VectorValue)*(spmv->nzCount());
+
+    // assigns local start addresses (for this particular PE)
+    m_rowPtrBase = rowPtrStart + startingRow * sizeof(VectorIndex);
+    m_matrixValBase = matrixValStart + startingNZ * sizeof(VectorValue);
+    m_colIndBase = colIndStart + startingNZ * sizeof(VectorIndex);
+    m_denseVecBase = denseVecStart;
+
+    // set defauls for memory strides
+    m_rowPtrStride = sizeof(VectorIndex);
+    m_matrixValStride = sizeof(VectorValue);
+    m_colIndStride = sizeof(VectorIndex);
+    m_denseVecStride = sizeof(VectorValue);
 }
 
 void ProcessingElement::setAccessedElementList(QList<quint32> indList, QList<quint32> rowlenList)

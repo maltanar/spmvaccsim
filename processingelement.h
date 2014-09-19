@@ -4,6 +4,7 @@
 #include <systemc.h>
 #include <QList>
 #include "spmvocmsimulation.h"
+#include "spmvoperation.h"
 #include "utilities.h"
 
 class SpMVOCMSimulation;
@@ -14,7 +15,9 @@ class ProcessingElement : public sc_module
 public:
     ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation * parentSim);
 
-    void setAccessedElementList(QList<VectorIndex> indList, QList<quint32> rowlenList);
+    void assignWork(SpMVOperation * spmv, int peCount);
+    void setAccessedElementList(QList<quint32> indList, QList<quint32> rowlenList);
+
     void setRequestFIFO(sc_fifo<MemoryOperation *> * fifo);
     void setResponseFIFO(sc_fifo<MemoryOperation *> * fifo);
     void sendReadRequests();
@@ -34,6 +37,10 @@ protected:
     sc_fifo<MemoryOperation *> * m_responses;
     int m_peID, m_maxOutstandingRequests;
     int m_maxAlive;
+    // start addresses for input data
+    quint64 m_rowPtrBase, m_matrixValBase, m_colIndBase, m_denseVecBase;
+    // stride values for input data (to support interleaved mapping)
+    int m_rowPtrStride, m_matrixValStride, m_colIndStride, m_denseVecStride;
     // to notify parent when we are finished
     SpMVOCMSimulation * m_parentSim;
 

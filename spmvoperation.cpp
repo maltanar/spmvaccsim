@@ -33,6 +33,29 @@ SpMVOperation::~SpMVOperation()
     delete [] m_rowPointers;
 }
 
+void SpMVOperation::assignWorkToWorker(quint32 peID, quint32 peCount, quint32 &startingRow, quint64 &startingNZ, QList<quint32> &dvAccessPattern, QList<quint32> &rowLengths)
+{
+    // TODO we don't handle corner cases (uneven division for given PE count) here
+    // calculate the assigned NZ range for this PE based on the assigned rows
+    quint32 rowsPerPE = m_rowCount / peCount;
+    startingRow = peID * rowsPerPE;
+    quint32 endRow = (peID + 1) * rowsPerPE;
+
+    for(quint32 i = startingRow; i < endRow; i++)
+    {
+        // push length of current row
+        rowLengths.push_back(m_rowPointers[i+1] - m_rowPointers[i]);
+        // push accessed column indices
+        for(quint32 j = m_rowPointers[i]; j < m_rowPointers[i+1]; j++)
+            dvAccessPattern.push_back(m_colIndices[j]);
+    }
+
+    // TODO a better way of distribution is to try to match a number of rows
+    // containing NNZ/n elements
+
+    startingNZ = m_rowPointers[startingRow];
+}
+
 QList<VectorIndex> SpMVOperation::getDVAccessPattern(quint32 peID, quint32 peCount)
 {
     // TODO we don't handle corner cases (uneven division for given PE count) here
