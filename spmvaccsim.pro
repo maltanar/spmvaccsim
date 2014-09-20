@@ -29,7 +29,8 @@ SOURCES += main.cpp\
     DRAMSim2/Rank.cpp \
     DRAMSim2/SimulatorObject.cpp \
     DRAMSim2/Transaction.cpp \
-    spmvocmsimulation.cpp
+    spmvocmsimulation.cpp \
+    memoryport.cpp
 
 HEADERS  += spmvoperation.h \
     utilities.h \
@@ -53,7 +54,8 @@ HEADERS  += spmvoperation.h \
     DRAMSim2/SimulatorObject.h \
     DRAMSim2/SystemConfiguration.h \
     DRAMSim2/Transaction.h \
-    spmvocmsimulation.h
+    spmvocmsimulation.h \
+    memoryport.h
 
 SYSTEMC_ROOT = /home/maltanar/systemc
 SYSTEMC_ARCH = linux64
