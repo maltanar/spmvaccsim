@@ -6,6 +6,9 @@
 #include "memorysystem.h"
 #include "utilities.h"
 
+// TODO the MSHR / multiple outstanding reqs version should actually
+// be implemented in a derived class, not here in this base class
+
 class MemoryPort : public sc_module
 {
     SC_HAS_PROCESS(MemoryPort);
@@ -21,16 +24,33 @@ public:
     sc_fifo_in<quint64> peInput;
     sc_fifo_out<quint64> peOutput;
 
+    void stop();
+
     virtual void memoryPortBehavior();
 
 protected:
     virtual quint64 translateToAddress(quint64 val);
+    void createRequests();
+    void issueRequests();
+    void handleResponses();
 
     MemorySystem * m_memSys;
     int m_portID, m_mshrCount;
+    bool m_stop;
+    // request-response rate control
+    int m_maxReqFIFOtoMSHRPerCycle, m_maxReqMSHRtoMemSysPerCycle, m_maxRespFromMemSysPerCycle;
     sc_fifo<MemoryOperation *> * m_memSysResponseFIFO;
 
     // TODO add data structures and functions for MSHRs and MSHA
+    typedef struct {
+        bool valid;
+        bool memRequestIssued;
+        quint64 address;
+    } MSHREntry;
+    QList<MSHREntry> m_mshrEntries;
+    int m_availableMSHRCount;
+    void addOutstandingRequest(quint64 val);
+    int findMSHRForResponse(quint64 addr);
 };
 
 #endif // MEMORYPORT_H
