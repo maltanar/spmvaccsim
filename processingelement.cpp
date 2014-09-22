@@ -35,10 +35,6 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     SC_THREAD(matrixValueAddrGen);
     SC_THREAD(colIndAddrGen);
     SC_THREAD(progress);
-
-    SC_METHOD(denseVectorAddrGen);
-    sensitive << m_colIndValue->data_written_event();
-
 }
 
 void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
@@ -219,6 +215,11 @@ void ProcessingElement::connectToMemorySystem(MemorySystem *memsys)
     m_memorySystem = memsys;
 
     createPortsAndFIFOs();
+
+    // TODO must be done after FIFOs are created
+    SC_METHOD(denseVectorAddrGen);
+    sensitive << m_colIndValue->data_written_event();
+    dont_initialize();
 }
 
 void ProcessingElement::createPortsAndFIFOs()
@@ -283,7 +284,9 @@ void ProcessingElement::denseVectorAddrGen()
 
     if(m_denseVectorAddr->num_free() > 1)
     {
-        quint64 ind = m_colIndValue->read();
+        quint64 ind =  0;
+
+        sc_assert(m_colIndValue->nb_read(ind));
         // memory ports return the address of read data for now
         // convert address back into col index index
         VectorIndex baseV = (ind - m_colIndBase) / m_colIndStride;
@@ -291,7 +294,7 @@ void ProcessingElement::denseVectorAddrGen()
         VectorIndex dvInd = m_vectorIndexList[baseV];
         quint64 dvAddr = m_denseVecBase + dvInd * m_denseVecStride;
         // write dv address
-        m_denseVectorAddr->write(dvAddr);
+        sc_assert(m_denseVectorAddr->nb_write(dvAddr));
         // TODO actually generate 2 addresses here
         /*VectorIndex dvInd1 = m_vectorIndexList[2*baseV];
         VectorIndex dvInd2 = m_vectorIndexList[2*baseV+1];*/
