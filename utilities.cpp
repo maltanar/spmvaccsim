@@ -1,6 +1,7 @@
 #include "utilities.h"
 
-
+// allocate space for global static variables from singleton
+int GlobalConfig::m_peFreq;
 
 
 QString getMatrixFilename(QString matrixName)

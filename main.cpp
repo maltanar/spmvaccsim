@@ -28,6 +28,7 @@ int sc_main(int argc, char **argv)
     QCommandLineOption cacheSizeOption("s", "Cache size per PE, in number of elements", "cachesize", "128");
     QCommandLineOption dramSimOverrideOption("x", "DRAMSim option override, e.g -x TOTAL_ROW_ACCESSES=1", "override", "");
     QCommandLineOption databaseNameOption("d", "Name of sqlite database to dump results into", "db", "results.db");
+    QCommandLineOption peClockFreqOption("f", "PE clock frequency (MHz)", "pefreq", "100");
 
     parser.addOption(peCountOption);
     parser.addOption(spmOption);
@@ -38,6 +39,7 @@ int sc_main(int argc, char **argv)
     parser.addOption(verboseDRAMSimOption);
     parser.addOption(dramSimOverrideOption);
     parser.addOption(databaseNameOption);
+    parser.addOption(peClockFreqOption);
 
     parser.process(app);
 
@@ -47,6 +49,10 @@ int sc_main(int argc, char **argv)
     int cachePerPE = parser.value(cacheSizeOption).toInt();
     QString spm = parser.value(spmOption);
     QString databaseName = parser.value(databaseNameOption);
+
+
+    int peFreq = parser.value(peClockFreqOption).toInt();
+    GlobalConfig::getInstance().setPEFreq(peFreq);
 
     QMap<QString, QString> memsysOverrides;
     QString overrideString;
