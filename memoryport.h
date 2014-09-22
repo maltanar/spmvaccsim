@@ -37,11 +37,12 @@ protected:
     MemorySystem * m_memSys;
     int m_portID, m_mshrCount;
     bool m_stop;
-    // request-response rate control
-    int m_maxReqFIFOtoMSHRPerCycle, m_maxReqMSHRtoMemSysPerCycle, m_maxRespFromMemSysPerCycle;
+    // FIFO for receiving responses from the memory system
     sc_fifo<MemoryOperation *> * m_memSysResponseFIFO;
+    // request-response rate control settings
+    int m_maxReqFIFOtoMSHRPerCycle, m_maxReqMSHRtoMemSysPerCycle, m_maxRespFromMemSysPerCycle;
 
-    // TODO add data structures and functions for MSHRs and MSHA
+    // data structures and functions for MSHRs / MHA
     typedef struct {
         bool valid;
         bool memRequestIssued;

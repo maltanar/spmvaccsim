@@ -6,6 +6,7 @@
 #include "spmvocmsimulation.h"
 #include "spmvoperation.h"
 #include "utilities.h"
+#include "memoryport.h"
 
 class SpMVOCMSimulation;
 
@@ -28,6 +29,31 @@ public:
     sc_time getAverageMemLatency();
     uint64_t getCacheMisses();
     uint64_t getCacheHits();
+
+    // -----------------------------------
+    // stuff for MemoryPort refactoring
+    // -----------------------------------
+    ~ProcessingElement();
+
+    void connectToMemorySystem(MemorySystem * memsys);
+    void createPortsAndFIFOs();
+
+    void matrixValueAddrGen();
+    void colIndAddrGen();
+    void denseVectorAddrGen();
+    void progress();
+
+    MemorySystem * m_memorySystem;
+
+    MemoryPort * m_matrixValuePort;
+    MemoryPort * m_colIndPort;
+    MemoryPort * m_denseVectorPort;
+
+    sc_fifo<quint64> * m_matrixValueAddr, * m_matrixValue;
+    sc_fifo<quint64> * m_colIndAddr, * m_colIndValue;
+    sc_fifo<quint64> * m_denseVectorAddr, * m_denseVectorValue;
+
+    // -----------------------------------
 
 protected:
     quint64 m_peNZCount;

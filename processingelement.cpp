@@ -30,8 +30,15 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     m_peNZCount = 0;
     m_peRowCount = 0;
 
-    SC_THREAD(sendReadRequests);
-    // TODO add thread for writes, they behave differently (no need to wait on result)
+    // declare SystemC threads and methods
+    // SC_THREAD(sendReadRequests);
+    SC_THREAD(matrixValueAddrGen);
+    SC_THREAD(colIndAddrGen);
+    SC_THREAD(progress);
+
+    SC_METHOD(denseVectorAddrGen);
+    sensitive << m_colIndValue->data_written_event();
+
 }
 
 void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
@@ -190,6 +197,136 @@ uint64_t ProcessingElement::getCacheHits()
 {
     return m_cacheHits;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+ProcessingElement::~ProcessingElement()
+{
+    delete m_matrixValueAddr;
+    delete m_matrixValue;
+    delete m_colIndAddr;
+    delete m_colIndValue;
+    delete m_denseVectorAddr;
+    delete m_denseVectorValue;
+
+    delete m_matrixValuePort;
+    delete m_colIndPort;
+    delete m_denseVectorPort;
+}
+
+void ProcessingElement::connectToMemorySystem(MemorySystem *memsys)
+{
+    m_memorySystem = memsys;
+
+    createPortsAndFIFOs();
+}
+
+void ProcessingElement::createPortsAndFIFOs()
+{
+    m_matrixValuePort = new MemoryPort("mvp", 100 + m_peID, m_memorySystem, m_maxOutstandingRequests);
+    m_colIndPort  = new MemoryPort("cip", 200 + m_peID, m_memorySystem, m_maxOutstandingRequests);
+    m_denseVectorPort = new MemoryPort("dvp", 300 + m_peID, m_memorySystem, m_maxOutstandingRequests);
+
+    // TODO parametrize these FIFO lengths
+    m_matrixValueAddr = new sc_fifo<quint64>(16);
+    m_matrixValue = new sc_fifo<quint64>(16);
+    m_colIndAddr = new sc_fifo<quint64>(16);
+    m_colIndValue = new sc_fifo<quint64>(16);
+    m_denseVectorAddr = new sc_fifo<quint64>(16);
+    m_denseVectorValue = new sc_fifo<quint64>(16);
+
+    m_matrixValuePort->peInput.bind(*m_matrixValueAddr);
+    m_matrixValuePort->peOutput.bind(*m_matrixValue);
+
+    m_colIndPort->peInput.bind(*m_colIndAddr);
+    m_colIndPort->peOutput.bind(*m_colIndValue);
+
+    m_denseVectorPort->peInput.bind(*m_denseVectorAddr);
+    m_denseVectorPort->peOutput.bind(*m_denseVectorValue);
+}
+
+void ProcessingElement::matrixValueAddrGen()
+{
+    quint64 nzCount = m_peNZCount;
+
+    while(nzCount)
+    {
+        // fill in as many addresses as possible into the FIFO
+        while(m_matrixValueAddr->nb_write(m_matrixValBase + (m_peNZCount-nzCount) * m_matrixValStride))
+            nzCount--;
+
+        wait(PE_CLOCK_CYCLE);
+    }
+}
+
+void ProcessingElement::colIndAddrGen()
+{
+    // this is separate from matrixValueAddrGen since the FIFOs may drain at different rates
+    // as a performance optimization it should be possible to combine them into the same SC_THREAD though
+
+    quint64 nzCount = m_peNZCount;
+
+    while(nzCount)
+    {
+        // fill in as many addresses as possible into the FIFO
+        while(m_colIndAddr->nb_write(m_colIndBase + (m_peNZCount-nzCount) * m_colIndStride))
+            nzCount--;
+
+        wait(PE_CLOCK_CYCLE);
+    }
+}
+
+void ProcessingElement::denseVectorAddrGen()
+{
+    // each colIndValue actually translates into 2 denseVectorAddress
+    // this SC_METHOD gets triggered every time a colIndValue is written
+
+    if(m_denseVectorAddr->num_free() > 1)
+    {
+        quint64 ind = m_colIndValue->read();
+        // memory ports return the address of read data for now
+        // convert address back into col index index
+        VectorIndex baseV = (ind - m_colIndBase) / m_colIndStride;
+        // lookup dense vector index from internal table
+        VectorIndex dvInd = m_vectorIndexList[baseV];
+        quint64 dvAddr = m_denseVecBase + dvInd * m_denseVecStride;
+        // write dv address
+        m_denseVectorAddr->write(dvAddr);
+        // TODO actually generate 2 addresses here
+        /*VectorIndex dvInd1 = m_vectorIndexList[2*baseV];
+        VectorIndex dvInd2 = m_vectorIndexList[2*baseV+1];*/
+    }
+
+}
+
+void ProcessingElement::progress()
+{
+    // TODO increment progress if both matrixValue and denseVectorValue are nonempty
+    quint64 nzCount = m_peNZCount;
+
+    while(1)
+    {
+        // TODO enable multiple NZs per cycle?
+        if(m_matrixValue->num_available() > 0 && m_denseVectorValue->num_available() > 0 )
+        {
+            m_matrixValue->read();
+            m_denseVectorValue->read();
+            nzCount--;
+        }
+
+        if(!nzCount)
+        {
+            break;
+        }
+
+        wait(PE_CLOCK_CYCLE);
+    }
+
+    m_parentSim->signalFinishedPE(m_peID);
+
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 void ProcessingElement::setupCache(CacheMode cacheMode, uint64_t totalSizeInWords)
 {

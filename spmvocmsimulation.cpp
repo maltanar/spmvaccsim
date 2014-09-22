@@ -50,6 +50,7 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
 
         // assign work for this new PE from the SpMV operation
         newPE->assignWork(spmv, m_peCount);
+        newPE->connectToMemorySystem(m_memorySystem);
 
         m_responseFIFOs.push_back(newRespFIFO);
         m_processingElements.push_back(newPE);
@@ -86,16 +87,16 @@ void SpMVOCMSimulation::signalFinishedPE(int peID)
         m_totalCycles = sc_time_stamp() / PE_CLOCK_CYCLE;
         sc_stop();
 
-        /*
-        qDebug() << "total cycles " << totalCycles;
+
+        qDebug() << "total cycles " << m_totalCycles;
         // TODO control the dumping of these statistics
         for(int i = 0; i < m_peCount; i++)
         {
             ProcessingElement * pe = m_processingElements[i];
-            qDebug() << "PE #" << i << " : \t\t" <<  pe->getCyclesWithResponse() << (float)(pe->getCyclesWithResponse())/(float)totalCycles << pe->getAverageMemLatency() / PE_CLOCK_CYCLE
+            qDebug() << "PE #" << i << " : \t\t" <<  pe->getCyclesWithResponse() << (float)(pe->getCyclesWithResponse())/(float)m_totalCycles << pe->getAverageMemLatency() / PE_CLOCK_CYCLE
                         << "\t" << pe->getCacheHits() << pe->getCacheMisses() << (float)pe->getCacheHits()/(float)(pe->getCacheHits()+pe->getCacheMisses());
         }
-        */
+
     }
 }
 
