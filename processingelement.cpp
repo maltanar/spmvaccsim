@@ -218,7 +218,7 @@ void ProcessingElement::connectToMemorySystem(MemorySystem *memsys)
 
     // TODO must be done after FIFOs are created
     SC_METHOD(denseVectorAddrGen);
-    sensitive << m_colIndValue->data_written_event();
+    sensitive << m_colIndValue->data_written_event() << m_denseVectorAddr->data_read_event();
     dont_initialize();
 }
 
@@ -267,6 +267,8 @@ void ProcessingElement::colIndAddrGen()
 
     quint64 nzCount = m_peNZCount;
 
+    // TODO we should generate only half the number of colind requests (every other)
+    // since each colind req gives 2 dv reqs
     while(nzCount)
     {
         // fill in as many addresses as possible into the FIFO
@@ -282,7 +284,8 @@ void ProcessingElement::denseVectorAddrGen()
     // each colIndValue actually translates into 2 denseVectorAddress
     // this SC_METHOD gets triggered every time a colIndValue is written
 
-    if(m_denseVectorAddr->num_free() > 1)
+    // TODO dvA FIFO should have >1 for generating 2 requests
+    if(m_denseVectorAddr->num_free() > 0 && m_colIndValue->num_available() > 0)
     {
         quint64 ind =  0;
 
@@ -295,17 +298,18 @@ void ProcessingElement::denseVectorAddrGen()
         quint64 dvAddr = m_denseVecBase + dvInd * m_denseVecStride;
         // write dv address
         sc_assert(m_denseVectorAddr->nb_write(dvAddr));
+
         // TODO actually generate 2 addresses here
         /*VectorIndex dvInd1 = m_vectorIndexList[2*baseV];
         VectorIndex dvInd2 = m_vectorIndexList[2*baseV+1];*/
     }
-
 }
 
 void ProcessingElement::progress()
 {
     // TODO increment progress if both matrixValue and denseVectorValue are nonempty
     quint64 nzCount = m_peNZCount;
+    sc_time last = sc_time(0,SC_NS);
 
     while(1)
     {
@@ -313,6 +317,11 @@ void ProcessingElement::progress()
         if(m_matrixValue->num_available() > 0 && m_denseVectorValue->num_available() > 0 )
         {
             m_matrixValue->read();
+
+            m_memLatencySum += sc_time_stamp() - last;
+            m_memLatencySamples++;
+            last = sc_time_stamp();
+
             m_denseVectorValue->read();
             nzCount--;
         }
