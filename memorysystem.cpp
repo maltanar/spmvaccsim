@@ -71,6 +71,16 @@ void MemorySystem::setResponseFIFO(int originID, sc_fifo<MemoryOperation *> *fif
     m_responseFIFOs[originID] = fifo;
 }
 
+bool MemorySystem::canAddRequest()
+{
+    return (m_requests->num_free() > 0);
+}
+
+void MemorySystem::addRequest(MemoryOperation *op)
+{
+    m_requests->write(op);
+}
+
 void MemorySystem::readComplete(unsigned id, uint64_t address, uint64_t clock_cycle)
 {
     // hacky lazy way to return the transaction obj, but oh well...

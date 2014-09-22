@@ -19,6 +19,9 @@ public:
     void setRequestFIFO(sc_fifo<MemoryOperation *> * fifo);
     void setResponseFIFO(int originID, sc_fifo<MemoryOperation *> * fifo);
 
+    bool canAddRequest();
+    void addRequest(MemoryOperation * op);
+
     void runMemorySystem();
 
     // callbacks from DRAMsim
