@@ -17,10 +17,7 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
     sc_report_handler::set_actions (SC_INFO, SC_DO_NOTHING);
 
     m_reqFIFOSize = 32;
-    m_respFIFOSize = 32;
     m_totalCycles = 0;
-
-    // TODO use the maxOutstandingMemReqsPerPE and cacheMode params as well
 
     m_matrixName = matrixName;
     m_peCount = peCount;
@@ -29,6 +26,7 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
     m_cacheWordsPerPE = cacheWordsPerPE;
 
     // instantiate the memory system simulator (DRAMsim)
+    // TODO move request directly inside MemorySystem?
     m_requestFIFO = new sc_fifo<MemoryOperation *>(m_reqFIFOSize);
     m_memorySystem = new MemorySystem("memsys", memsysOverrides);
     m_memorySystem->setRequestFIFO(m_requestFIFO);
@@ -40,19 +38,13 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
     for(int i = 0; i < m_peCount; i++)
     {
         m_finished.push_back(false);
-        sc_fifo<MemoryOperation *> * newRespFIFO = new sc_fifo<MemoryOperation *>(m_respFIFOSize);
-        m_memorySystem->setResponseFIFO(i, newRespFIFO);
 
         ProcessingElement * newPE = new ProcessingElement("pe", i, m_maxOutstandingMemReqsPerPE, m_cacheWordsPerPE, cacheMode, this);
-
-        newPE->setRequestFIFO(m_requestFIFO);
-        newPE->setResponseFIFO(newRespFIFO);
 
         // assign work for this new PE from the SpMV operation
         newPE->assignWork(spmv, m_peCount);
         newPE->connectToMemorySystem(m_memorySystem);
 
-        m_responseFIFOs.push_back(newRespFIFO);
         m_processingElements.push_back(newPE);
     }
 
@@ -64,7 +56,6 @@ SpMVOCMSimulation::~SpMVOCMSimulation()
     // deallocate objects
     for(int i = 0; i < m_peCount; i++)
     {
-        delete m_responseFIFOs[i];
         delete m_processingElements[i];
 
     }

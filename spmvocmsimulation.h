@@ -31,13 +31,12 @@ protected:
     QString m_matrixName;
     int m_peCount, m_maxOutstandingMemReqsPerPE;
     CacheMode m_cacheMode;
-    int m_reqFIFOSize, m_respFIFOSize;
+    int m_reqFIFOSize;
     int m_cacheWordsPerPE;
 
     MemorySystem * m_memorySystem;
     sc_fifo<MemoryOperation *> * m_requestFIFO;
     QList<ProcessingElement *> m_processingElements;
-    QList<sc_fifo<MemoryOperation *> *> m_responseFIFOs;
     QList<bool> m_finished;
 
     void createDBTables();

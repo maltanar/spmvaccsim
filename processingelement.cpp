@@ -18,7 +18,6 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     m_streamBufferHeadPos = 0;
     m_maxAlive = 0;
 
-    // TODO make total cache size configurable
     setupCache(cacheMode, cacheWordsTotal);
 
     m_cyclesWithRequest = 0;
@@ -30,8 +29,7 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     m_peNZCount = 0;
     m_peRowCount = 0;
 
-    // declare SystemC threads and methods
-    // SC_THREAD(sendReadRequests);
+    // declare SystemC threads
     SC_THREAD(matrixValueAddrGen);
     SC_THREAD(colIndAddrGen);
     SC_THREAD(progress);
@@ -67,106 +65,18 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
     m_peRowCount = m_rowLenList.size();
 }
 
-void ProcessingElement::setRequestFIFO(sc_fifo<MemoryOperation *> *fifo)
+ProcessingElement::~ProcessingElement()
 {
-    m_requests = fifo;
-}
+    delete m_matrixValueAddr;
+    delete m_matrixValue;
+    delete m_colIndAddr;
+    delete m_colIndValue;
+    delete m_denseVectorAddr;
+    delete m_denseVectorValue;
 
-void ProcessingElement::setResponseFIFO(sc_fifo<MemoryOperation *> *fifo)
-{
-    m_responses = fifo;
-}
-
-void ProcessingElement::sendReadRequests()
-{
-    VectorIndex elementsLeft = m_vectorIndexList.size(), // the "real" progress indicator
-                currentIndex = 0;                       // the element ind we are currently requesting
-
-    int rowsLeft = m_rowLenList.size(), currentRow = 0, elementsInRow = m_rowLenList[currentRow];
-
-    int requestsInFlight = 0;
-
-    while(elementsLeft > 0)
-    {
-        // TODO use loops if we want more than 1 request/response per cycle
-
-        // handle incoming responses, if any
-        if(m_responses->num_available() > 0)
-        {
-            MemoryOperation * op = m_responses->read();
-            // we got response for a request
-            requestsInFlight--;
-
-            // we are assuming progress is fundamentally limited by the dense vector reads --
-            // so only vector data returns count towards real progress
-            if(op->tag == TAG_VECTOR_DATA)
-            {
-                m_memLatencySum += op->latency;
-                m_memLatencySamples++;
-
-                // progress!
-                elementsLeft--;
-
-                // TODO this must change if we handle multiple reqs/resps per cycle
-                m_cyclesWithResponse++;
-
-                // this was a cache miss, add it to the cache
-                cacheAdd((VectorIndex) op->address);
-
-                // handle end-of-row stuff
-                elementsInRow--;
-                if(elementsInRow == 0)
-                {
-                    rowsLeft--;
-                    if(rowsLeft)
-                    {
-                        currentRow++;
-                        elementsInRow = m_rowLenList[currentRow];
-                    }
-                }
-            }
-
-            // TODO calculate latencies etc for non-vector-index data
-
-            // free up memory
-            freeRequest(op);
-        }
-
-        /*
-        m_requests->write(makeReadRequest(m_peID, m_rowPtrBase + m_rowPtrStride*currentRow, TAG_ROW_LENGTH));
-        m_requests->write(makeReadRequest(m_peID, m_colIndBase + m_colIndStride*currentIndex, TAG_COL_IND));
-        m_requests->write(makeReadRequest(m_peID, m_matrixValBase + m_matrixValStride*currentIndex, TAG_MATRIX_VAL));
-        */
-
-        // add new request if possible
-        if(requestsInFlight < m_maxOutstandingRequests && m_requests->num_free() > 0
-                && elementsLeft && currentIndex < m_vectorIndexList.size())
-        {
-            // send out request only on cache miss
-            if(!cacheCheck(m_vectorIndexList[currentIndex]))
-            {
-                MemoryOperation * op = makeReadRequest(m_peID, (quint64) m_vectorIndexList[currentIndex], TAG_VECTOR_DATA);
-                m_requests->write(op);
-                requestsInFlight++;
-
-                // TODO move this to outside the if for multiple requests per cycle
-                // and use a flag
-                m_cyclesWithRequest++;
-            }
-            else
-            {
-                elementsLeft--;
-            }
-
-            currentIndex++;
-
-        }
-
-        wait(PE_CLOCK_CYCLE);
-    }
-
-    // notify parent that we are finished
-    m_parentSim->signalFinishedPE(m_peID);
+    delete m_matrixValuePort;
+    delete m_colIndPort;
+    delete m_denseVectorPort;
 }
 
 uint64_t ProcessingElement::getCyclesWithResponse()
@@ -194,29 +104,13 @@ uint64_t ProcessingElement::getCacheHits()
     return m_cacheHits;
 }
 
-// ---------------------------------------------------------------------------------------------------------------------------------------------------
-
-ProcessingElement::~ProcessingElement()
-{
-    delete m_matrixValueAddr;
-    delete m_matrixValue;
-    delete m_colIndAddr;
-    delete m_colIndValue;
-    delete m_denseVectorAddr;
-    delete m_denseVectorValue;
-
-    delete m_matrixValuePort;
-    delete m_colIndPort;
-    delete m_denseVectorPort;
-}
-
 void ProcessingElement::connectToMemorySystem(MemorySystem *memsys)
 {
     m_memorySystem = memsys;
 
     createPortsAndFIFOs();
 
-    // TODO must be done after FIFOs are created
+    // must be done after FIFOs are created
     SC_METHOD(denseVectorAddrGen);
     sensitive << m_colIndValue->data_written_event() << m_denseVectorAddr->data_read_event();
     dont_initialize();
@@ -284,6 +178,10 @@ void ProcessingElement::denseVectorAddrGen()
     // each colIndValue actually translates into 2 denseVectorAddress
     // this SC_METHOD gets triggered every time a colIndValue is written
 
+    // TODO add cache support here - for cache hits, bypass memory port and
+    // write to denseVectorValues directly. for cache misses, watch the output of
+    // denseVectorValues and add them to cache.
+
     // TODO dvA FIFO should have >1 for generating 2 requests
     if(m_denseVectorAddr->num_free() > 0 && m_colIndValue->num_available() > 0)
     {
@@ -307,7 +205,7 @@ void ProcessingElement::denseVectorAddrGen()
 
 void ProcessingElement::progress()
 {
-    // TODO increment progress if both matrixValue and denseVectorValue are nonempty
+    // increment progress if both matrixValue and denseVectorValue are nonempty
     quint64 nzCount = m_peNZCount;
     sc_time last = sc_time(0,SC_NS);
 
@@ -335,10 +233,8 @@ void ProcessingElement::progress()
     }
 
     m_parentSim->signalFinishedPE(m_peID);
-
 }
 
-// ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 void ProcessingElement::setupCache(CacheMode cacheMode, uint64_t totalSizeInWords)
 {
@@ -403,6 +299,7 @@ bool ProcessingElement::cacheCheck(VectorIndex index)
         CacheEntry entry = m_cacheSets[set][mappedIndex];
         if(entry.valid && entry.index == index)
         {
+            // TODO can we do update-on-write instead, and call cacheAdd every time?
             // update LRU entry -- move set to end of queue
             m_cacheLRUEntry[mappedIndex].removeAll(set);
             m_cacheLRUEntry[mappedIndex].append(set);

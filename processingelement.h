@@ -15,12 +15,12 @@ class ProcessingElement : public sc_module
     SC_HAS_PROCESS(ProcessingElement);
 public:
     ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation * parentSim);
+    ~ProcessingElement();
 
+    // assign work from SpMV operation to this PE
     void assignWork(SpMVOperation * spmv, int peCount);
-
-    void setRequestFIFO(sc_fifo<MemoryOperation *> * fifo);
-    void setResponseFIFO(sc_fifo<MemoryOperation *> * fifo);
-    void sendReadRequests();
+    // connect PE to memory system instance
+    void connectToMemorySystem(MemorySystem * memsys);
 
     // statistics
     int getAssignedElemCount();
@@ -30,14 +30,9 @@ public:
     uint64_t getCacheMisses();
     uint64_t getCacheHits();
 
-    // -----------------------------------
-    // stuff for MemoryPort refactoring
-    // -----------------------------------
-    ~ProcessingElement();
-
-    void connectToMemorySystem(MemorySystem * memsys);
+protected:
     void createPortsAndFIFOs();
-
+    // SystemC threads
     void matrixValueAddrGen();
     void colIndAddrGen();
     void denseVectorAddrGen();
@@ -53,9 +48,6 @@ public:
     sc_fifo<quint64> * m_colIndAddr, * m_colIndValue;
     sc_fifo<quint64> * m_denseVectorAddr, * m_denseVectorValue;
 
-    // -----------------------------------
-
-protected:
     quint64 m_peNZCount;
     VectorIndex m_peRowCount;
     QList<VectorIndex> m_vectorIndexList;
