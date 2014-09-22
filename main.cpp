@@ -29,6 +29,7 @@ int sc_main(int argc, char **argv)
     QCommandLineOption dramSimOverrideOption("x", "DRAMSim option override, e.g -x TOTAL_ROW_ACCESSES=1", "override", "");
     QCommandLineOption databaseNameOption("d", "Name of sqlite database to dump results into", "db", "results.db");
     QCommandLineOption peClockFreqOption("f", "PE clock frequency (MHz)", "pefreq", "100");
+    QCommandLineOption dramChipTypeOption("t", "DRAM chip type (e.g DDR2-667-16M-8x8)", "dramchip", "DDR2-667-16M-8x8");
 
     parser.addOption(peCountOption);
     parser.addOption(spmOption);
@@ -40,6 +41,7 @@ int sc_main(int argc, char **argv)
     parser.addOption(dramSimOverrideOption);
     parser.addOption(databaseNameOption);
     parser.addOption(peClockFreqOption);
+    parser.addOption(dramChipTypeOption);
 
     parser.process(app);
 
@@ -52,7 +54,10 @@ int sc_main(int argc, char **argv)
 
 
     int peFreq = parser.value(peClockFreqOption).toInt();
-    GlobalConfig::getInstance().setPEFreq(peFreq);
+    GlobalConfig::getInstance().setPEFreqMHz(peFreq);
+
+    QString dramType = parser.value(dramChipTypeOption);
+    GlobalConfig::getInstance().setDRAMConfig(dramType);
 
     QMap<QString, QString> memsysOverrides;
     QString overrideString;

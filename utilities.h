@@ -8,8 +8,8 @@
 #define     VectorIndex         quint32
 #define     VectorValue         double
 
-#define     PE_CLOCK_CYCLE      (sc_time(10, SC_NS) / ((float)(GlobalConfig::getInstance().getPEFreq()) / 100.0   ) )
-#define     MEMC_CLOCK_CYCLE    sc_time(3, SC_NS)
+#define     PE_CLOCK_CYCLE      (sc_time(10, SC_NS) / ((float)(GlobalConfig::getInstance().getPEFreqMHz()) / 100.0   ) )
+#define     MEMC_CLOCK_CYCLE    (sc_time(3, SC_NS) / ((float)(GlobalConfig::getInstance().getMemIOClkFreqMHz()) / 333.0   ) )
 #define     PE_TICKS_PER_SECOND (uint64_t)(sc_time(1000, SC_MS)/PE_CLOCK_CYCLE)
 #define     INI_CONFIG_DIR      "/home/maltanar/sandbox/spmvaccsim/ini"
 
@@ -51,11 +51,16 @@ class GlobalConfig
             return instance;
         }
 
-        static void setPEFreq(int f) {m_peFreq = f;};
-        static int getPEFreq() {return m_peFreq;};
+        static void setPEFreqMHz(int f);;
+        static int getPEFreqMHz();;
+
+        static void setDRAMConfig(QString dramChipType);
+        static QString getMemConfigFile();
+        static int getMemIOClkFreqMHz();
+
 
     private:
-        GlobalConfig() {m_peFreq=100;};                   // Constructor? (the {} brackets) are needed here.
+        GlobalConfig();                   // Constructor? (the {} brackets) are needed here.
         // Dont forget to declare these two. You want to make sure they
         // are unaccessable otherwise you may accidently get copies of
         // your singleton appearing.
@@ -63,6 +68,10 @@ class GlobalConfig
         void operator=(GlobalConfig const&); // Don't implement
 
         static int m_peFreq;
+
+        static QString m_dramChipType;
+        static QMap<QString, QString> m_configFiles;
+        static QMap<QString, int> m_memIOClkMHz;
 };
 
 

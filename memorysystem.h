@@ -38,7 +38,6 @@ public:
 
 protected:
     QString m_systemConfigFile;
-    QString m_dramPartFile;
     int m_megsOfMemory;
 
     DRAMSim::MultiChannelMemorySystem * m_DRAMSim;
