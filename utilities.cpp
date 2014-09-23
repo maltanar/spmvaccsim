@@ -108,8 +108,7 @@ int GlobalConfig::getMemIOClkFreqMHz()
 
 int GlobalConfig::getDevicesPerRank()
 {
-    // TODO DDR interface width can be changed from 64 via DRAMsim settings!
-    return 64 / m_chipInfo[m_dramChipType].interfaceWidthBits;
+    return DRAM_ACCESS_WIDTH_BYTES*8 / m_chipInfo[m_dramChipType].interfaceWidthBits;
 }
 
 int GlobalConfig::getTotalRanks()
@@ -126,10 +125,8 @@ int GlobalConfig::getTotalRanks()
 
 float GlobalConfig::getPeakBandwidthMBs()
 {
-    // TODO DDR interface width can be changed from 64 via DRAMsim settings!
-    // for now we assume 8-byte (64-bit) interface
     // TODO number of channels important here
-    return 2.0 * (float)m_chipInfo[m_dramChipType].ioClkMHz * 8;
+    return 2.0 * (float)m_chipInfo[m_dramChipType].ioClkMHz * DRAM_ACCESS_WIDTH_BYTES;
 }
 
 GlobalConfig::GlobalConfig()
