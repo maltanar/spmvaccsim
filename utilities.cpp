@@ -3,8 +3,7 @@
 // allocate space for global static variables from singleton
 int GlobalConfig::m_peFreq;
 QString GlobalConfig::m_dramChipType;
-QMap<QString, QString> GlobalConfig::m_configFiles;
-QMap<QString, int> GlobalConfig::m_memIOClkMHz;
+QMap<QString, DRAMChipInfo> GlobalConfig::m_chipInfo;
 int GlobalConfig::m_memorySizeMB;
 
 
@@ -99,12 +98,29 @@ void GlobalConfig::setDRAMConfig(QString dramChipType)
 
 QString GlobalConfig::getMemConfigFile()
 {
-    return m_configFiles[m_dramChipType] + ".ini";
+    return m_chipInfo[m_dramChipType].configFileName + ".ini";
 }
 
 int GlobalConfig::getMemIOClkFreqMHz()
 {
-    return m_memIOClkMHz[m_dramChipType];
+    return m_chipInfo[m_dramChipType].ioClkMHz;
+}
+
+int GlobalConfig::getDevicesPerRank()
+{
+    // TODO DDR interface width can be changed from 64 via DRAMsim settings!
+    return 64 / m_chipInfo[m_dramChipType].interfaceWidthBits;
+}
+
+int GlobalConfig::getTotalRanks()
+{
+    int capacityPerRankMB = getDevicesPerRank() * m_chipInfo[m_dramChipType].capacityMB;
+    int ranksForWantedCapacity = m_memorySizeMB / capacityPerRankMB;
+    // always need at least 1 rank
+    if(ranksForWantedCapacity == 0)
+        ranksForWantedCapacity = 1;
+
+    return ranksForWantedCapacity;
 }
 
 GlobalConfig::GlobalConfig()
@@ -113,25 +129,59 @@ GlobalConfig::GlobalConfig()
     m_dramChipType = "DDR2-667-16M-8x8";
     m_memorySizeMB = 512;
 
-    m_configFiles["DDR2-667-16M-8x8"] = "DDR2_micron_16M_8b_x8_sg3E";
-    m_configFiles["DDR2-667-32M-4x4"] = "DDR2_micron_32M_4B_x4_sg3E";
-    m_configFiles["DDR2-800-32M-8x4"] = "DDR2_micron_32M_8B_x4_sg25E";
-    m_configFiles["DDR3-1333-8M-8x16"] = "DDR3_micron_8M_8B_x16_sg15";
-    m_configFiles["DDR3-1333-16M-8x8"] = "DDR3_micron_16M_8B_x8_sg15";
-    m_configFiles["DDR3-1333-32M-8x4"] = "DDR3_micron_32M_8B_x4_sg15";
-    m_configFiles["DDR3-1600-32M-8x4"] = "DDR3_micron_32M_8B_x4_sg125";
-    m_configFiles["DDR3-1333-32M-8x8"] = "DDR3_micron_32M_8B_x8_sg15";
-    m_configFiles["DDR3-800-32M-8x8"] = "DDR3_micron_32M_8B_x8_sg25E";
-    m_configFiles["DDR3-1333-64M-8x4"] = "DDR3_micron_64M_8B_x4_sg15";
+    m_chipInfo["DDR2-667-16M-8x8"].configFileName = "DDR2_micron_16M_8b_x8_sg3E";
+    m_chipInfo["DDR2-667-32M-4x4"].configFileName = "DDR2_micron_32M_4B_x4_sg3E";
+    m_chipInfo["DDR2-800-32M-8x4"].configFileName = "DDR2_micron_32M_8B_x4_sg25E";
+    m_chipInfo["DDR3-1333-8M-8x16"].configFileName = "DDR3_micron_8M_8B_x16_sg15";
+    m_chipInfo["DDR3-1333-16M-8x8"].configFileName = "DDR3_micron_16M_8B_x8_sg15";
+    m_chipInfo["DDR3-1333-32M-8x4"].configFileName = "DDR3_micron_32M_8B_x4_sg15";
+    m_chipInfo["DDR3-1600-32M-8x4"].configFileName = "DDR3_micron_32M_8B_x4_sg125";
+    m_chipInfo["DDR3-1333-32M-8x8"].configFileName = "DDR3_micron_32M_8B_x8_sg15";
+    m_chipInfo["DDR3-800-32M-8x8"].configFileName = "DDR3_micron_32M_8B_x8_sg25E";
+    m_chipInfo["DDR3-1333-64M-8x4"].configFileName = "DDR3_micron_64M_8B_x4_sg15";
 
-    m_memIOClkMHz["DDR2-667-16M-8x8"] = 333;
-    m_memIOClkMHz["DDR2-667-32M-4x4"] = 333;
-    m_memIOClkMHz["DDR2-800-32M-8x4"] = 400;
-    m_memIOClkMHz["DDR3-1333-8M-8x16"] = 666;
-    m_memIOClkMHz["DDR3-1333-16M-8x8"] = 666;
-    m_memIOClkMHz["DDR3-1333-32M-8x4"] = 666;
-    m_memIOClkMHz["DDR3-1600-32M-8x4"] = 800;
-    m_memIOClkMHz["DDR3-1333-32M-8x8"] = 666;
-    m_memIOClkMHz["DDR3-800-32M-8x8"] = 400;
-    m_memIOClkMHz["DDR3-1333-64M-8x4"] = 666;
+    m_chipInfo["DDR2-667-16M-8x8"].ioClkMHz = 333;
+    m_chipInfo["DDR2-667-32M-4x4"].ioClkMHz = 333;
+    m_chipInfo["DDR2-800-32M-8x4"].ioClkMHz = 400;
+    m_chipInfo["DDR3-1333-8M-8x16"].ioClkMHz = 666;
+    m_chipInfo["DDR3-1333-16M-8x8"].ioClkMHz = 666;
+    m_chipInfo["DDR3-1333-32M-8x4"].ioClkMHz = 666;
+    m_chipInfo["DDR3-1600-32M-8x4"].ioClkMHz = 800;
+    m_chipInfo["DDR3-1333-32M-8x8"].ioClkMHz = 666;
+    m_chipInfo["DDR3-800-32M-8x8"].ioClkMHz = 400;
+    m_chipInfo["DDR3-1333-64M-8x4"].ioClkMHz = 666;
+
+    m_chipInfo["DDR2-667-16M-8x8"].numBanks = 8;
+    m_chipInfo["DDR2-667-32M-4x4"].numBanks = 4;
+    m_chipInfo["DDR2-800-32M-8x4"].numBanks = 8;
+    m_chipInfo["DDR3-1333-8M-8x16"].numBanks = 8;
+    m_chipInfo["DDR3-1333-16M-8x8"].numBanks = 8;
+    m_chipInfo["DDR3-1333-32M-8x4"].numBanks = 8;
+    m_chipInfo["DDR3-1600-32M-8x4"].numBanks = 8;
+    m_chipInfo["DDR3-1333-32M-8x8"].numBanks = 8;
+    m_chipInfo["DDR3-800-32M-8x8"].numBanks = 8;
+    m_chipInfo["DDR3-1333-64M-8x4"].numBanks = 8;
+
+    m_chipInfo["DDR2-667-16M-8x8"].interfaceWidthBits = 8;
+    m_chipInfo["DDR2-667-32M-4x4"].interfaceWidthBits = 4;
+    m_chipInfo["DDR2-800-32M-8x4"].interfaceWidthBits = 4;
+    m_chipInfo["DDR3-1333-8M-8x16"].interfaceWidthBits = 16;
+    m_chipInfo["DDR3-1333-16M-8x8"].interfaceWidthBits = 8;
+    m_chipInfo["DDR3-1333-32M-8x4"].interfaceWidthBits = 4;
+    m_chipInfo["DDR3-1600-32M-8x4"].interfaceWidthBits = 4;
+    m_chipInfo["DDR3-1333-32M-8x8"].interfaceWidthBits = 8;
+    m_chipInfo["DDR3-800-32M-8x8"].interfaceWidthBits = 8;
+    m_chipInfo["DDR3-1333-64M-8x4"].interfaceWidthBits = 4;
+
+    m_chipInfo["DDR2-667-16M-8x8"].capacityMB = 128;
+    m_chipInfo["DDR2-667-32M-4x4"].capacityMB = 64;
+    m_chipInfo["DDR2-800-32M-8x4"].capacityMB = 128;
+    m_chipInfo["DDR3-1333-8M-8x16"].capacityMB = 128;
+    m_chipInfo["DDR3-1333-16M-8x8"].capacityMB = 128;
+    m_chipInfo["DDR3-1333-32M-8x4"].capacityMB = 128;
+    m_chipInfo["DDR3-1600-32M-8x4"].capacityMB = 128;
+    m_chipInfo["DDR3-1333-32M-8x8"].capacityMB = 256;
+    m_chipInfo["DDR3-800-32M-8x8"].capacityMB = 256;
+    m_chipInfo["DDR3-1333-64M-8x4"].capacityMB = 256;
+
 }

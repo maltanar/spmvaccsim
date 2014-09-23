@@ -30,7 +30,7 @@ int sc_main(int argc, char **argv)
     QCommandLineOption databaseNameOption("d", "Name of sqlite database to dump results into", "db", "results.db");
     QCommandLineOption peClockFreqOption("f", "PE clock frequency (MHz)", "pefreq", "100");
     QCommandLineOption dramChipTypeOption("t", "DRAM chip type (e.g DDR2-667-16M-8x8)", "dramchip", "DDR2-667-16M-8x8");
-    QCommandLineOption memSizeOption("s", "Memory size", "memsize", "512");
+    QCommandLineOption memSizeOption("r", "Memory size", "memsize", "512");
 
     parser.addOption(peCountOption);
     parser.addOption(spmOption);
@@ -43,6 +43,7 @@ int sc_main(int argc, char **argv)
     parser.addOption(databaseNameOption);
     parser.addOption(peClockFreqOption);
     parser.addOption(dramChipTypeOption);
+    parser.addOption(memSizeOption);
 
     parser.process(app);
 
@@ -92,7 +93,6 @@ int sc_main(int argc, char **argv)
         qDebug() << "PE count must be minimum 1";
         peCount = 1;
     }
-
 
     SpMVOCMSimulation sim(spm, peCount, maxOutstandingReqs, cacheMode, cachePerPE, memsysOverrides);
 

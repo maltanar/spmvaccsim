@@ -42,7 +42,13 @@ typedef enum {
     cacheModeStreamBuffer,
 } CacheMode;
 
-
+typedef struct {
+    QString configFileName;
+    int ioClkMHz;
+    int capacityMB;
+    int interfaceWidthBits;
+    int numBanks;
+} DRAMChipInfo;
 
 MemoryOperation * makeReadRequest(int origin, quint64 address, MemRequestTag tag);
 
@@ -68,6 +74,9 @@ class GlobalConfig
         static QString getMemConfigFile();
         static int getMemIOClkFreqMHz();
 
+        static int getDevicesPerRank();
+        static int getTotalRanks();
+
 
     private:
         GlobalConfig();                   // Constructor? (the {} brackets) are needed here.
@@ -81,6 +90,7 @@ class GlobalConfig
         static int m_memorySizeMB;
 
         static QString m_dramChipType;
+        static QMap<QString, DRAMChipInfo> m_chipInfo;
         static QMap<QString, QString> m_configFiles;
         static QMap<QString, int> m_memIOClkMHz;
 };
