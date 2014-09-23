@@ -2,10 +2,6 @@
 #include <QDebug>
 #include "processingelement.h"
 
-#define TAG_VECTOR_DATA     1
-#define TAG_ROW_LENGTH      2
-#define TAG_MATRIX_VAL      3
-#define TAG_COL_IND         4
 
 ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation *parentSim) :
     sc_module(name)
@@ -118,9 +114,9 @@ void ProcessingElement::connectToMemorySystem(MemorySystem *memsys)
 
 void ProcessingElement::createPortsAndFIFOs()
 {
-    m_matrixValuePort = new MemoryPort("mvp", 100 + m_peID, m_memorySystem, m_maxOutstandingRequests);
-    m_colIndPort  = new MemoryPort("cip", 200 + m_peID, m_memorySystem, m_maxOutstandingRequests);
-    m_denseVectorPort = new MemoryPort("dvp", 300 + m_peID, m_memorySystem, m_maxOutstandingRequests);
+    m_matrixValuePort = new MemoryPort("mvp", 100 + m_peID, memReqMatrixData, m_memorySystem, m_maxOutstandingRequests);
+    m_colIndPort  = new MemoryPort("cip", 200 + m_peID, memReqColInd, m_memorySystem, m_maxOutstandingRequests);
+    m_denseVectorPort = new MemoryPort("dvp", 300 + m_peID, memReqVectorData, m_memorySystem, m_maxOutstandingRequests);
 
     // TODO parametrize these FIFO lengths
     m_matrixValueAddr = new sc_fifo<quint64>(16);

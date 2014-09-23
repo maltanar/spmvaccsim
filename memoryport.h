@@ -16,6 +16,7 @@ class MemoryPort : public sc_module
 public:
     MemoryPort(sc_module_name name,     // name for SystemC module
                int portId,              // identifier for this port
+               MemRequestTag tag,       // tag to identify requests from this port
                MemorySystem * memSys,   // target memory system
                int mshrCount);          // number of MSHRs
     ~MemoryPort();
@@ -37,6 +38,8 @@ protected:
     MemorySystem * m_memSys;
     int m_portID, m_mshrCount;
     bool m_stop;
+    MemRequestTag m_reqTag;
+
     // FIFO for receiving responses from the memory system
     sc_fifo<MemoryOperation *> * m_memSysResponseFIFO;
     // request-response rate control settings

@@ -1,13 +1,14 @@
 #include <QDebug>
 #include "memoryport.h"
 
-MemoryPort::MemoryPort(sc_module_name name, int portId, MemorySystem *memSys, int mshrCount) : sc_module(name)
+MemoryPort::MemoryPort(sc_module_name name, int portId, MemRequestTag tag, MemorySystem *memSys, int mshrCount) : sc_module(name)
 {
     m_memSys = memSys;
     m_portID = portId;
     m_mshrCount = mshrCount;
     m_availableMSHRCount = mshrCount;
     m_stop = false;
+    m_reqTag = tag;
 
     // set default rate control settings
     // TODO make these customizable
@@ -100,7 +101,7 @@ void MemoryPort::issueRequests()
         if(m_mshrEntries[i].valid && !m_mshrEntries[i].memRequestIssued && m_memSys->canAddRequest())
         {
             // issue request to memory system
-            MemoryOperation * op = makeReadRequest(m_portID, m_mshrEntries[i].address, 0);
+            MemoryOperation * op = makeReadRequest(m_portID, m_mshrEntries[i].address, m_reqTag);
             m_memSys->addRequest(op);
 
             // mark MSHR as issued
@@ -140,7 +141,7 @@ void MemoryPort::handleResponses()
         m_mshrEntries[ind].memRequestIssued = false;
         m_availableMSHRCount++;
 
-        delete op;
+        freeRequest(op);
 
         // limit response rate
         if(--maxRespFromMemSysPerCycle == 0)

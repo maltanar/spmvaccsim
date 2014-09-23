@@ -16,6 +16,14 @@
 QString getMatrixFilename(QString matrixName);
 QMap<QString, QString> getDefaultDRAMSimConfig();
 
+typedef enum {
+    memReqOther,
+    memReqRowLen,
+    memReqMatrixData,
+    memReqColInd,
+    memReqVectorData
+} MemRequestTag;
+
 typedef struct {
     bool isResponse;
     bool isWrite;
@@ -23,7 +31,7 @@ typedef struct {
     quint64 data;
     int origin;
     sc_time latency;
-    int tag;
+    MemRequestTag tag;
 } MemoryOperation;
 
 typedef enum {
@@ -34,12 +42,11 @@ typedef enum {
     cacheModeStreamBuffer,
 } CacheMode;
 
-MemoryOperation * makeReadRequest(int origin, quint64 address, int tag);
-MemoryOperation * makeReadResponse(int origin, quint64 address, quint64 data);
-MemoryOperation * makeWriteRequest(int origin, quint64 address, quint64 data, int tag);
+
+
+MemoryOperation * makeReadRequest(int origin, quint64 address, MemRequestTag tag);
 
 void freeRequest(MemoryOperation *req);
-
 
 class GlobalConfig
 {
