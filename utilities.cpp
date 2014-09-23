@@ -114,6 +114,7 @@ int GlobalConfig::getDevicesPerRank()
 
 int GlobalConfig::getTotalRanks()
 {
+    // TODO number of channels is important here
     int capacityPerRankMB = getDevicesPerRank() * m_chipInfo[m_dramChipType].capacityMB;
     int ranksForWantedCapacity = m_memorySizeMB / capacityPerRankMB;
     // always need at least 1 rank
@@ -123,11 +124,22 @@ int GlobalConfig::getTotalRanks()
     return ranksForWantedCapacity;
 }
 
+float GlobalConfig::getPeakBandwidthMBs()
+{
+    // TODO DDR interface width can be changed from 64 via DRAMsim settings!
+    // for now we assume 8-byte (64-bit) interface
+    // TODO number of channels important here
+    return 2.0 * (float)m_chipInfo[m_dramChipType].ioClkMHz * 8;
+}
+
 GlobalConfig::GlobalConfig()
 {
     m_peFreq=100;
-    m_dramChipType = "DDR2-667-16M-8x8";
-    m_memorySizeMB = 512;
+    // defaults:
+    // DDR3-1600 which gives 12.8 GB/s peak bandwidth
+    // 4096 MB which gives 2 ranks
+    m_dramChipType = "DDR3-1600-32M-8x4";
+    m_memorySizeMB = 4096;
 
     m_chipInfo["DDR2-667-16M-8x8"].configFileName = "DDR2_micron_16M_8b_x8_sg3E";
     m_chipInfo["DDR2-667-32M-4x4"].configFileName = "DDR2_micron_32M_4B_x4_sg3E";

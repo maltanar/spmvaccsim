@@ -77,6 +77,8 @@ class GlobalConfig
         static int getDevicesPerRank();
         static int getTotalRanks();
 
+        static float getPeakBandwidthMBs();
+
 
     private:
         GlobalConfig();                   // Constructor? (the {} brackets) are needed here.
