@@ -128,6 +128,9 @@ void ProcessingElement::connectToMemorySystem(MemorySystem *memsys)
     SC_METHOD(denseVectorAddrGen);
     sensitive << m_colIndValue->data_written_event() << m_denseVectorAddr->data_read_event();
     dont_initialize();
+
+    SC_METHOD(rowPtrValueSplit);
+    sensitive << m_rowPtrValueRaw->data_written_event() << m_rowPtrValue->data_read_event();
 }
 
 void ProcessingElement::createPortsAndFIFOs()
@@ -140,6 +143,7 @@ void ProcessingElement::createPortsAndFIFOs()
     // TODO parametrize these FIFO lengths
     m_rowPtrAddr = new sc_fifo<quint64>(16);
     m_rowPtrValue = new sc_fifo<quint64>(16);
+    m_rowPtrValueRaw = new sc_fifo<quint64>(16);
     m_matrixValueAddr = new sc_fifo<quint64>(16);
     m_matrixValue = new sc_fifo<quint64>(16);
     m_colIndAddr = new sc_fifo<quint64>(16);
@@ -148,7 +152,7 @@ void ProcessingElement::createPortsAndFIFOs()
     m_denseVectorValue = new sc_fifo<quint64>(16);
 
     m_rowPtrPort->peInput.bind(*m_rowPtrAddr);
-    m_rowPtrPort->peOutput.bind(*m_rowPtrValue);
+    m_rowPtrPort->peOutput.bind(*m_rowPtrValueRaw);
 
     m_matrixValuePort->peInput.bind(*m_matrixValueAddr);
     m_matrixValuePort->peOutput.bind(*m_matrixValue);
@@ -170,19 +174,39 @@ void ProcessingElement::rowPtrAddrGen()
 {
     VectorIndex rowCount = m_peRowCount;
 
-    // TODO should generate half the number of row ptr requests
-    // right now we are using 8-byte row pointers
+    int rowPtrsPerWord = ( DRAM_ACCESS_WIDTH_BYTES / sizeof(VectorIndex) );
 
     while(rowCount > 0)
     {
         // fill in as many addresses as possible into the FIFO
-        while(m_rowPtrAddr->nb_write(m_rowPtrBase + (m_peRowCount-rowCount) * DRAM_ACCESS_WIDTH_BYTES))
-            rowCount--;
+        while(m_rowPtrAddr->nb_write(m_rowPtrBase + (m_peRowCount-rowCount) * m_rowPtrStride))
+            rowCount -= rowPtrsPerWord;
 
         // drain rate for the address FIFO will eventually depend on the drain rate
         // of the value FIFO (rowPtrValue), which is determined by the progress() process
 
         wait(PE_CLOCK_CYCLE);
+    }
+
+    // note that we don't guarantee rowCount is even, as such it may become negative
+    // at this point. this shouldn't cause trouble as the rowPtrValueSplit does boundary checking
+}
+
+void ProcessingElement::rowPtrValueSplit()
+{
+    // generates two (or more) row pointers from raw rowptr values from memory
+    int rowPtrsPerWord = ( DRAM_ACCESS_WIDTH_BYTES / sizeof(VectorIndex) );
+
+    if(m_rowPtrValue->num_free() >= rowPtrsPerWord && m_rowPtrValueRaw->num_available() > 0)
+    {
+        VectorIndex rowNum = (m_rowPtrValueRaw->read() - m_rowPtrBase) / m_rowPtrStride;
+
+        sc_assert(m_rowPtrValue->nb_write(rowNum));
+
+        // TODO depends on DRAM_ACCESS_WIDTH_BYTES
+        // avoid shooting over the assigned rows to this PE
+        if(rowNum+1 < m_peRowCount)
+            sc_assert(m_rowPtrValue->nb_write(rowNum+1));
     }
 }
 
@@ -275,9 +299,7 @@ void ProcessingElement::progress()
         // keep track of current row
         if(m_rowPtrValue->num_available() > 0 && nzLeftInRow == 0)
         {
-            // TODO assumes 8-byte row pointers
-            VectorIndex row = (m_rowPtrValue->read() - m_rowPtrBase) / DRAM_ACCESS_WIDTH_BYTES;
-            sc_assert(row < m_peRowCount);
+            VectorIndex row = m_rowPtrValue->read();
             nzLeftInRow = m_rowLenList[row];
         }
 

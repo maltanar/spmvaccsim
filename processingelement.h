@@ -35,6 +35,7 @@ protected:
     void createPortsAndFIFOs();
     // SystemC threads
     void rowPtrAddrGen();
+    void rowPtrValueSplit();
     void matrixValueAddrGen();
     void colIndAddrGen();
     void denseVectorAddrGen();
@@ -47,7 +48,7 @@ protected:
     MemoryPort * m_colIndPort;
     MemoryPort * m_denseVectorPort;
 
-    sc_fifo<quint64> * m_rowPtrAddr, * m_rowPtrValue;
+    sc_fifo<quint64> * m_rowPtrAddr, * m_rowPtrValueRaw, * m_rowPtrValue;
     sc_fifo<quint64> * m_matrixValueAddr, * m_matrixValue;
     sc_fifo<quint64> * m_colIndAddr, * m_colIndValue;
     sc_fifo<quint64> * m_denseVectorAddr, * m_denseVectorValue;

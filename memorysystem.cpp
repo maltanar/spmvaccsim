@@ -77,6 +77,7 @@ void MemorySystem::addRequest(MemoryOperation *op)
 {
     m_requests->write(op);
 
+    // uncomment this (at the risk of becoming overflooded with data) to see the requests made to the memory system
     // qDebug() << "memreq: " << op->address << " from " << op->origin << " at " << QString::fromStdString(sc_time_stamp().to_string());
 }
 
