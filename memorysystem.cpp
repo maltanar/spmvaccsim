@@ -11,7 +11,7 @@ uint64_t MemorySystem::m_powerSamples;
 MemorySystem::MemorySystem(sc_module_name name, QMap<QString, QString> configOverrides) : sc_module(name)
 {
     m_systemConfigFile = "system.ini";
-    m_megsOfMemory = 512;
+    m_megsOfMemory = GlobalConfig::getInstance().getMemorySizeMB();
 
     // convert the override map to std::map
     QMapIterator<QString, QString> it(configOverrides);
@@ -24,7 +24,7 @@ MemorySystem::MemorySystem(sc_module_name name, QMap<QString, QString> configOve
     }
 
     // create the DRAMSim2 memory system instance
-    m_DRAMSim = getMemorySystemInstance(GlobalConfig::getMemConfigFile().toStdString(), m_systemConfigFile.toStdString(),
+    m_DRAMSim = getMemorySystemInstance(GlobalConfig::getInstance().getMemConfigFile().toStdString(), m_systemConfigFile.toStdString(),
                                         INI_CONFIG_DIR, "example_app", m_megsOfMemory, NULL, &overrideStdMap);
 
     m_readCB = new Callback<MemorySystem, void, unsigned, uint64_t, uint64_t>(this, &MemorySystem::readComplete);

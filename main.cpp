@@ -30,6 +30,7 @@ int sc_main(int argc, char **argv)
     QCommandLineOption databaseNameOption("d", "Name of sqlite database to dump results into", "db", "results.db");
     QCommandLineOption peClockFreqOption("f", "PE clock frequency (MHz)", "pefreq", "100");
     QCommandLineOption dramChipTypeOption("t", "DRAM chip type (e.g DDR2-667-16M-8x8)", "dramchip", "DDR2-667-16M-8x8");
+    QCommandLineOption memSizeOption("s", "Memory size", "memsize", "512");
 
     parser.addOption(peCountOption);
     parser.addOption(spmOption);
@@ -51,6 +52,8 @@ int sc_main(int argc, char **argv)
     int cachePerPE = parser.value(cacheSizeOption).toInt();
     QString spm = parser.value(spmOption);
     QString databaseName = parser.value(databaseNameOption);
+    int memSize = parser.value(memSizeOption).toInt();
+    GlobalConfig::getInstance().setMemorySizeMB(memSize);
 
 
     int peFreq = parser.value(peClockFreqOption).toInt();

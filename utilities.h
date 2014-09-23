@@ -51,8 +51,11 @@ class GlobalConfig
             return instance;
         }
 
-        static void setPEFreqMHz(int f);;
-        static int getPEFreqMHz();;
+        static void setPEFreqMHz(int f);
+        static int getPEFreqMHz();
+
+        static void setMemorySizeMB(int memSize);
+        static int getMemorySizeMB();
 
         static void setDRAMConfig(QString dramChipType);
         static QString getMemConfigFile();
@@ -68,6 +71,7 @@ class GlobalConfig
         void operator=(GlobalConfig const&); // Don't implement
 
         static int m_peFreq;
+        static int m_memorySizeMB;
 
         static QString m_dramChipType;
         static QMap<QString, QString> m_configFiles;

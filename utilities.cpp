@@ -5,6 +5,7 @@ int GlobalConfig::m_peFreq;
 QString GlobalConfig::m_dramChipType;
 QMap<QString, QString> GlobalConfig::m_configFiles;
 QMap<QString, int> GlobalConfig::m_memIOClkMHz;
+int GlobalConfig::m_memorySizeMB;
 
 
 QString getMatrixFilename(QString matrixName)
@@ -109,6 +110,16 @@ void GlobalConfig::setPEFreqMHz(int f) {m_peFreq = f;}
 
 int GlobalConfig::getPEFreqMHz() {return m_peFreq;}
 
+void GlobalConfig::setMemorySizeMB(int memSize)
+{
+    m_memorySizeMB = memSize;
+}
+
+int GlobalConfig::getMemorySizeMB()
+{
+    return m_memorySizeMB;
+}
+
 void GlobalConfig::setDRAMConfig(QString dramChipType)
 {
     m_dramChipType = dramChipType;
@@ -127,7 +138,8 @@ int GlobalConfig::getMemIOClkFreqMHz()
 GlobalConfig::GlobalConfig()
 {
     m_peFreq=100;
-    m_dramChipType="DDR2-667-16M-8x8";
+    m_dramChipType = "DDR2-667-16M-8x8";
+    m_memorySizeMB = 512;
 
     m_configFiles["DDR2-667-16M-8x8"] = "DDR2_micron_16M_8b_x8_sg3E";
     m_configFiles["DDR2-667-32M-4x4"] = "DDR2_micron_32M_4B_x4_sg3E";
