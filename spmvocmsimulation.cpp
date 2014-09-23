@@ -9,7 +9,8 @@
 #include <QSqlError>
 
 SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE,
-                                     CacheMode cacheMode, uint64_t cacheWordsPerPE, QMap<QString, QString> memsysOverrides) :
+                                     CacheMode cacheMode, uint64_t cacheWordsPerPE, QMap<QString, QString> memsysOverrides,
+                                     QList<MemRequestTag> bypass) :
     sc_module(sc_module_name("top"))
 {
     // tone down the SystemC verbosity
@@ -39,7 +40,7 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
     {
         m_finished.push_back(false);
 
-        ProcessingElement * newPE = new ProcessingElement("pe", i, m_maxOutstandingMemReqsPerPE, m_cacheWordsPerPE, cacheMode, this);
+        ProcessingElement * newPE = new ProcessingElement("pe", i, m_maxOutstandingMemReqsPerPE, m_cacheWordsPerPE, cacheMode, this, bypass);
 
         // assign work for this new PE from the SpMV operation
         newPE->assignWork(spmv, m_peCount);
@@ -88,7 +89,8 @@ void SpMVOCMSimulation::signalFinishedPE(int peID)
                         << "\t" << pe->getCacheHits() << pe->getCacheMisses() << (float)pe->getCacheHits()/(float)(pe->getCacheHits()+pe->getCacheMisses());
         }
 
-
+        SHOW_SIM_OUTPUT = 1;
+        m_memorySystem->printFinalStats();
     }
 }
 

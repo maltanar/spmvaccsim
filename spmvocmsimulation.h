@@ -12,7 +12,8 @@ class ProcessingElement;
 class SpMVOCMSimulation : public sc_module
 {
 public:
-    SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE, CacheMode cacheMode, uint64_t cacheWordsPerPE, QMap<QString, QString> memsysOverrides);
+    SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE, CacheMode cacheMode, uint64_t cacheWordsPerPE,
+                      QMap<QString, QString> memsysOverrides, QList<MemRequestTag> bypass);
     ~SpMVOCMSimulation();
 
     void run();

@@ -9,6 +9,7 @@ MemoryPort::MemoryPort(sc_module_name name, int portId, MemRequestTag tag, Memor
     m_availableMSHRCount = mshrCount;
     m_stop = false;
     m_reqTag = tag;
+    m_bypassEnabled = false;
 
     // set default rate control settings
     // TODO make these customizable
@@ -44,15 +45,32 @@ void MemoryPort::stop()
     m_stop = true;
 }
 
+void MemoryPort::setBypassMode(bool enable)
+{
+    m_bypassEnabled = enable;
+}
+
 void MemoryPort::memoryPortBehavior()
 {
     // main SystemC thread that implements memory port behavior
 
     while(!m_stop)
     {
-        createRequests();
-        issueRequests();
-        handleResponses();
+        if(!m_bypassEnabled)
+        {
+            createRequests();
+            issueRequests();
+            handleResponses();
+        }
+        else
+        {
+            // bypass mode - just move input to output
+            // TODO should we enable bypassing multiple reqs per cycle here?
+            if(peInput.num_available() > 0 && peOutput.num_free() > 0)
+            {
+                peOutput.write(peInput.read());
+            }
+        }
 
         wait(PE_CLOCK_CYCLE);
     }

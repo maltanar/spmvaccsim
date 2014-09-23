@@ -26,6 +26,7 @@ public:
     sc_fifo_out<quint64> peOutput;
 
     void stop();
+    void setBypassMode(bool enable);
 
     virtual void memoryPortBehavior();
 
@@ -38,6 +39,7 @@ protected:
     MemorySystem * m_memSys;
     int m_portID, m_mshrCount;
     bool m_stop;
+    bool m_bypassEnabled;
     MemRequestTag m_reqTag;
 
     // FIFO for receiving responses from the memory system
