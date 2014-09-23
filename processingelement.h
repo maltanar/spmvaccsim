@@ -14,7 +14,7 @@ class ProcessingElement : public sc_module
 {
     SC_HAS_PROCESS(ProcessingElement);
 public:
-    ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation * parentSim);
+    ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation * parentSim, QList<MemRequestTag> bypass = QList<MemRequestTag>());
     ~ProcessingElement();
 
     // assign work from SpMV operation to this PE
@@ -55,6 +55,11 @@ protected:
     sc_fifo<MemoryOperation *> * m_requests;
     sc_fifo<MemoryOperation *> * m_responses;
     int m_peID, m_maxOutstandingRequests;
+
+    // flags for bypassing DRAM requests to some streams
+    QList<MemRequestTag> m_requestBypassEnable;
+
+    // for maximum aliveness analysis
     int m_maxAlive;
     // start addresses for input data
     quint64 m_rowPtrBase, m_matrixValBase, m_colIndBase, m_denseVecBase;

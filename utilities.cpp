@@ -59,7 +59,7 @@ QMap<QString, QString> getDefaultDRAMSimConfig()
     //for true/false, please use all lowercase"
     defaultConfig["DEBUG_TRANS_Q"]="false";
     defaultConfig["DEBUG_CMD_Q"]="false";
-    defaultConfig["DEBUG_ADDR_MAP"]="true";
+    defaultConfig["DEBUG_ADDR_MAP"]="false";
     defaultConfig["DEBUG_BUS"]="false";
     defaultConfig["DEBUG_BANKSTATE"]="false";
     defaultConfig["DEBUG_BANKS"]="false";
@@ -134,10 +134,13 @@ float GlobalConfig::getPeakBandwidthMBs()
 
 GlobalConfig::GlobalConfig()
 {
-    m_peFreq=100;
+
     // defaults:
     // DDR3-1600 which gives 12.8 GB/s peak bandwidth
     // 4096 MB which gives 2 ranks
+    // 100 MHz PE
+    // note: the real defaults come from the command line param defaults
+    m_peFreq=100;
     m_dramChipType = "DDR3-1600-32M-8x4";
     m_memorySizeMB = 4096;
 

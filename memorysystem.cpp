@@ -190,3 +190,14 @@ void MemorySystem::runMemorySystem()
         m_DRAMSim->update();
     }
 }
+
+void MemorySystem::printFinalStats()
+{
+    double totalDataVolumeBytes = 8.0 * m_latencySamples;
+    double totalSecsElapsed = sc_time_stamp() / sc_time(1, SC_SEC);
+    double peakBW = GlobalConfig::getPeakBandwidthMBs()/1024;
+    double avgBW = (totalDataVolumeBytes / totalSecsElapsed) / (1024.0 * 1024.0 * 1024.0);
+    qDebug() << "average aggregate DRAM bandwidth: " << avgBW << "GB/s (" << 100*avgBW/peakBW  << "% of peak, which is " << peakBW << " GB∕s)";
+
+    // m_DRAMSim->printStats(true);
+}

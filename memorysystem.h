@@ -24,6 +24,8 @@ public:
 
     void runMemorySystem();
 
+    void printFinalStats();
+
     // callbacks from DRAMsim
     void readComplete(unsigned id, uint64_t address, uint64_t clock_cycle);
     void writeComplete(unsigned id, uint64_t address, uint64_t clock_cycle);

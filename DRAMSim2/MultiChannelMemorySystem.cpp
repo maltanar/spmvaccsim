@@ -376,7 +376,7 @@ void MultiChannelMemorySystem::actual_update()
 	if (currentClockCycle == 0)
 	{
 		InitOutputFiles(traceFilename);
-		DEBUG("DRAMSim2 Clock Frequency ="<<clockDomainCrosser.clock1<<"Hz, CPU Clock Frequency="<<clockDomainCrosser.clock2<<"Hz"); 
+        PRINT("DRAMSim2 Clock Frequency ="<<clockDomainCrosser.clock1<<"Hz, CPU Clock Frequency="<<clockDomainCrosser.clock2<<"Hz");
 	}
 
 	if (currentClockCycle % EPOCH_LENGTH == 0)
@@ -478,14 +478,14 @@ bool MultiChannelMemorySystem::willAcceptTransaction()
 
 void MultiChannelMemorySystem::printStats(bool finalStats) {
 
-	(*csvOut) << "ms" <<currentClockCycle * tCK * 1E-6; 
-	for (size_t i=0; i<NUM_CHANS; i++)
-	{
-		PRINT("==== Channel ["<<i<<"] ====");
-		channels[i]->printStats(finalStats); 
-		PRINT("//// Channel ["<<i<<"] ////");
-	}
-	csvOut->finalize();
+    (*csvOut) << "ms" <<currentClockCycle * tCK * 1E-6;
+    for (size_t i=0; i<NUM_CHANS; i++)
+    {
+        PRINT("==== Channel ["<<i<<"] ====");
+        channels[i]->printStats(finalStats);
+        PRINT("//// Channel ["<<i<<"] ////");
+    }
+    csvOut->finalize();
 }
 void MultiChannelMemorySystem::RegisterCallbacks( 
 		TransactionCompleteCB *readDone,

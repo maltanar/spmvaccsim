@@ -3,7 +3,8 @@
 #include "processingelement.h"
 
 
-ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation *parentSim) :
+ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal,
+                                     CacheMode cacheMode, SpMVOCMSimulation *parentSim, QList<MemRequestTag> bypass) :
     sc_module(name)
 {
     m_parentSim = parentSim;
@@ -13,6 +14,7 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     m_maxOutstandingRequests = maxOutstandingRequests;
     m_streamBufferHeadPos = 0;
     m_maxAlive = 0;
+    m_requestBypassEnable = bypass;
 
     setupCache(cacheMode, cacheWordsTotal);
 
@@ -134,6 +136,12 @@ void ProcessingElement::createPortsAndFIFOs()
 
     m_denseVectorPort->peInput.bind(*m_denseVectorAddr);
     m_denseVectorPort->peOutput.bind(*m_denseVectorValue);
+
+    // set bypass flags according to parameters
+    m_matrixValuePort->setBypassMode( m_requestBypassEnable.contains(memReqMatrixData) );
+    m_colIndPort->setBypassMode( m_requestBypassEnable.contains(memReqColInd) );
+    m_denseVectorPort->setBypassMode( m_requestBypassEnable.contains(memReqVectorData) );
+
 }
 
 void ProcessingElement::matrixValueAddrGen()

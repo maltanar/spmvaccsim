@@ -29,8 +29,11 @@ int sc_main(int argc, char **argv)
     QCommandLineOption dramSimOverrideOption("x", "DRAMSim option override, e.g -x TOTAL_ROW_ACCESSES=1", "override", "");
     QCommandLineOption databaseNameOption("d", "Name of sqlite database to dump results into", "db", "results.db");
     QCommandLineOption peClockFreqOption("f", "PE clock frequency (MHz)", "pefreq", "100");
-    QCommandLineOption dramChipTypeOption("t", "DRAM chip type (e.g DDR2-667-16M-8x8)", "dramchip", "DDR2-667-16M-8x8");
-    QCommandLineOption memSizeOption("r", "Memory size", "memsize", "512");
+    QCommandLineOption dramChipTypeOption("t", "DRAM chip type (e.g DDR3-1600-32M-8x4)", "dramchip", "DDR3-1600-32M-8x4");
+    QCommandLineOption memSizeOption("r", "Memory size", "memsize", "4096");
+    QCommandLineOption bypassMatValOption("bMV", "Bypass A_ij (matrix value) reads");
+    QCommandLineOption bypassColIndOption("bCI", "Bypass j (col index) reads");
+    QCommandLineOption bypassVecValOption("bVV", "Bypass x_j (dense vector value) reads");
 
     parser.addOption(peCountOption);
     parser.addOption(spmOption);
@@ -44,6 +47,9 @@ int sc_main(int argc, char **argv)
     parser.addOption(peClockFreqOption);
     parser.addOption(dramChipTypeOption);
     parser.addOption(memSizeOption);
+    parser.addOption(bypassMatValOption);
+    parser.addOption(bypassColIndOption);
+    parser.addOption(bypassVecValOption);
 
     parser.process(app);
 
@@ -56,14 +62,13 @@ int sc_main(int argc, char **argv)
     int memSize = parser.value(memSizeOption).toInt();
     GlobalConfig::getInstance().setMemorySizeMB(memSize);
 
-
     int peFreq = parser.value(peClockFreqOption).toInt();
     GlobalConfig::getInstance().setPEFreqMHz(peFreq);
 
     QString dramType = parser.value(dramChipTypeOption);
     GlobalConfig::getInstance().setDRAMConfig(dramType);
 
-    QMap<QString, QString> memsysOverrides;
+    QMap<QString, QString> memsysOverrides = getDefaultDRAMSimConfig();
     QString overrideString;
 
     foreach(overrideString, parser.values(dramSimOverrideOption))
@@ -72,9 +77,17 @@ int sc_main(int argc, char **argv)
         memsysOverrides[fields[0]] = fields[1];
     }
 
-
     if(parser.isSet(verboseDRAMSimOption))
         SHOW_SIM_OUTPUT=1;
+
+    // construct the bypass flags according to command line
+    QList<MemRequestTag> bypassFlags;
+    if(parser.isSet(bypassMatValOption))
+        bypassFlags.push_back(memReqMatrixData);
+    if(parser.isSet(bypassColIndOption))
+        bypassFlags.push_back(memReqColInd);
+    if(parser.isSet(bypassVecValOption))
+        bypassFlags.push_back(memReqVectorData);
 
     if(spm.isEmpty() || !QFile::exists(getMatrixFilename(spm)))
     {
@@ -94,7 +107,7 @@ int sc_main(int argc, char **argv)
         peCount = 1;
     }
 
-    SpMVOCMSimulation sim(spm, peCount, maxOutstandingReqs, cacheMode, cachePerPE, memsysOverrides);
+    SpMVOCMSimulation sim(spm, peCount, maxOutstandingReqs, cacheMode, cachePerPE, memsysOverrides, bypassFlags);
 
     sim.run();
 
