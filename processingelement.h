@@ -14,7 +14,8 @@ class ProcessingElement : public sc_module
 {
     SC_HAS_PROCESS(ProcessingElement);
 public:
-    ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal, CacheMode cacheMode, SpMVOCMSimulation * parentSim, QList<MemRequestTag> bypass = QList<MemRequestTag>());
+    ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal,
+                      CacheMode cacheMode, SpMVOCMSimulation * parentSim, QList<MemRequestTag> bypass = QList<MemRequestTag>());
     ~ProcessingElement();
 
     // assign work from SpMV operation to this PE
@@ -33,6 +34,7 @@ public:
 protected:
     void createPortsAndFIFOs();
     // SystemC threads
+    void rowPtrAddrGen();
     void matrixValueAddrGen();
     void colIndAddrGen();
     void denseVectorAddrGen();
@@ -40,10 +42,12 @@ protected:
 
     MemorySystem * m_memorySystem;
 
+    MemoryPort * m_rowPtrPort;
     MemoryPort * m_matrixValuePort;
     MemoryPort * m_colIndPort;
     MemoryPort * m_denseVectorPort;
 
+    sc_fifo<quint64> * m_rowPtrAddr, * m_rowPtrValue;
     sc_fifo<quint64> * m_matrixValueAddr, * m_matrixValue;
     sc_fifo<quint64> * m_colIndAddr, * m_colIndValue;
     sc_fifo<quint64> * m_denseVectorAddr, * m_denseVectorValue;
@@ -52,8 +56,7 @@ protected:
     VectorIndex m_peRowCount;
     QList<VectorIndex> m_vectorIndexList;
     QList<quint32> m_rowLenList;
-    sc_fifo<MemoryOperation *> * m_requests;
-    sc_fifo<MemoryOperation *> * m_responses;
+
     int m_peID, m_maxOutstandingRequests;
 
     // flags for bypassing DRAM requests to some streams

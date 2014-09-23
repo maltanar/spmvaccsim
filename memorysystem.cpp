@@ -77,7 +77,7 @@ void MemorySystem::addRequest(MemoryOperation *op)
 {
     m_requests->write(op);
 
-    // qDebug() << "memreq: " << op->address << " from " << op->origin;
+    // qDebug() << "memreq: " << op->address << " from " << op->origin << " at " << QString::fromStdString(sc_time_stamp().to_string());
 }
 
 void MemorySystem::readComplete(unsigned id, uint64_t address, uint64_t clock_cycle)

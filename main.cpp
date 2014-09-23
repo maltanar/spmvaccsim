@@ -31,6 +31,7 @@ int sc_main(int argc, char **argv)
     QCommandLineOption peClockFreqOption("f", "PE clock frequency (MHz)", "pefreq", "100");
     QCommandLineOption dramChipTypeOption("t", "DRAM chip type (e.g DDR3-1600-32M-8x4)", "dramchip", "DDR3-1600-32M-8x4");
     QCommandLineOption memSizeOption("r", "Memory size", "memsize", "4096");
+    QCommandLineOption bypassRowPtrOption("bRP", "Bypass row ptr reads");
     QCommandLineOption bypassMatValOption("bMV", "Bypass A_ij (matrix value) reads");
     QCommandLineOption bypassColIndOption("bCI", "Bypass j (col index) reads");
     QCommandLineOption bypassVecValOption("bVV", "Bypass x_j (dense vector value) reads");
@@ -47,6 +48,7 @@ int sc_main(int argc, char **argv)
     parser.addOption(peClockFreqOption);
     parser.addOption(dramChipTypeOption);
     parser.addOption(memSizeOption);
+    parser.addOption(bypassRowPtrOption);
     parser.addOption(bypassMatValOption);
     parser.addOption(bypassColIndOption);
     parser.addOption(bypassVecValOption);
@@ -82,6 +84,8 @@ int sc_main(int argc, char **argv)
 
     // construct the bypass flags according to command line
     QList<MemRequestTag> bypassFlags;
+    if(parser.isSet(bypassRowPtrOption))
+        bypassFlags.push_back(memReqRowLen);
     if(parser.isSet(bypassMatValOption))
         bypassFlags.push_back(memReqMatrixData);
     if(parser.isSet(bypassColIndOption))

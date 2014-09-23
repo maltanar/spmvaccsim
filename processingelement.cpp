@@ -9,8 +9,6 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     sc_module(name)
 {
     m_parentSim = parentSim;
-    m_requests = NULL;
-    m_responses = NULL;
     m_peID = peID;
     m_maxOutstandingRequests = maxOutstandingRequests;
     m_streamBufferHeadPos = 0;
@@ -29,6 +27,7 @@ ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutst
     m_peRowCount = 0;
 
     // declare SystemC threads
+    SC_THREAD(rowPtrAddrGen);
     SC_THREAD(matrixValueAddrGen);
     SC_THREAD(colIndAddrGen);
     SC_THREAD(progress);
@@ -42,7 +41,7 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
 
     // calculate global start addresses for input data
     // assume SpMV data linearly laid out in memory
-    // TODO support interleaved data mode?
+    // TODO support interleaved mapping to the SpM?
     quint64 rowPtrStart = 0;
 
     quint64 colIndStart = rowPtrStart + sizeof(VectorIndex)*(spmv->rowCount()+1);
@@ -133,17 +132,23 @@ void ProcessingElement::connectToMemorySystem(MemorySystem *memsys)
 
 void ProcessingElement::createPortsAndFIFOs()
 {
+    m_rowPtrPort = new MemoryPort("rpp", m_peID, memReqRowLen, m_memorySystem, m_maxOutstandingRequests);
     m_matrixValuePort = new MemoryPort("mvp", 100 + m_peID, memReqMatrixData, m_memorySystem, m_maxOutstandingRequests);
     m_colIndPort  = new MemoryPort("cip", 200 + m_peID, memReqColInd, m_memorySystem, m_maxOutstandingRequests);
     m_denseVectorPort = new MemoryPort("dvp", 300 + m_peID, memReqVectorData, m_memorySystem, m_maxOutstandingRequests);
 
     // TODO parametrize these FIFO lengths
+    m_rowPtrAddr = new sc_fifo<quint64>(16);
+    m_rowPtrValue = new sc_fifo<quint64>(16);
     m_matrixValueAddr = new sc_fifo<quint64>(16);
     m_matrixValue = new sc_fifo<quint64>(16);
     m_colIndAddr = new sc_fifo<quint64>(16);
     m_colIndValue = new sc_fifo<quint64>(16);
     m_denseVectorAddr = new sc_fifo<quint64>(16);
     m_denseVectorValue = new sc_fifo<quint64>(16);
+
+    m_rowPtrPort->peInput.bind(*m_rowPtrAddr);
+    m_rowPtrPort->peOutput.bind(*m_rowPtrValue);
 
     m_matrixValuePort->peInput.bind(*m_matrixValueAddr);
     m_matrixValuePort->peOutput.bind(*m_matrixValue);
@@ -155,10 +160,30 @@ void ProcessingElement::createPortsAndFIFOs()
     m_denseVectorPort->peOutput.bind(*m_denseVectorValue);
 
     // set bypass flags according to parameters
+    m_rowPtrPort->setBypassMode( m_requestBypassEnable.contains(memReqRowLen) );
     m_matrixValuePort->setBypassMode( m_requestBypassEnable.contains(memReqMatrixData) );
     m_colIndPort->setBypassMode( m_requestBypassEnable.contains(memReqColInd) );
     m_denseVectorPort->setBypassMode( m_requestBypassEnable.contains(memReqVectorData) );
+}
 
+void ProcessingElement::rowPtrAddrGen()
+{
+    VectorIndex rowCount = m_peRowCount;
+
+    // TODO should generate half the number of row ptr requests
+    // right now we are using 8-byte row pointers
+
+    while(rowCount > 0)
+    {
+        // fill in as many addresses as possible into the FIFO
+        while(m_rowPtrAddr->nb_write(m_rowPtrBase + (m_peRowCount-rowCount) * DRAM_ACCESS_WIDTH_BYTES))
+            rowCount--;
+
+        // drain rate for the address FIFO will eventually depend on the drain rate
+        // of the value FIFO (rowPtrValue), which is determined by the progress() process
+
+        wait(PE_CLOCK_CYCLE);
+    }
 }
 
 void ProcessingElement::matrixValueAddrGen()
@@ -238,13 +263,27 @@ void ProcessingElement::denseVectorAddrGen()
 void ProcessingElement::progress()
 {
     // increment progress if both matrixValue and denseVectorValue are nonempty
+    // and if we have some rowlen data available
     quint64 nzCount = m_peNZCount;
+    // keep track of nonzeroes left in row
+    VectorIndex nzLeftInRow = 0;
+
     sc_time last = sc_time(0,SC_NS);
 
     while(1)
     {
+        // keep track of current row
+        if(m_rowPtrValue->num_available() > 0 && nzLeftInRow == 0)
+        {
+            // TODO assumes 8-byte row pointers
+            VectorIndex row = (m_rowPtrValue->read() - m_rowPtrBase) / DRAM_ACCESS_WIDTH_BYTES;
+            sc_assert(row < m_peRowCount);
+            nzLeftInRow = m_rowLenList[row];
+        }
+
+
         // TODO enable multiple NZs per cycle?
-        if(m_matrixValue->num_available() > 0 && m_denseVectorValue->num_available() > 0 )
+        if(m_matrixValue->num_available() > 0 && m_denseVectorValue->num_available() > 0 && nzLeftInRow > 0)
         {
             m_matrixValue->read();
 
@@ -254,8 +293,12 @@ void ProcessingElement::progress()
 
             m_denseVectorValue->read();
             nzCount--;
+            nzLeftInRow--;
         }
 
+
+
+        // break when have issued enough ops
         if(!nzCount)
         {
             break;
