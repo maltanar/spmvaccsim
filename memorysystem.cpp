@@ -76,6 +76,8 @@ bool MemorySystem::canAddRequest()
 void MemorySystem::addRequest(MemoryOperation *op)
 {
     m_requests->write(op);
+
+    // qDebug() << "memreq: " << op->address << " from " << op->origin;
 }
 
 void MemorySystem::readComplete(unsigned id, uint64_t address, uint64_t clock_cycle)
@@ -198,6 +200,7 @@ void MemorySystem::printFinalStats()
     double peakBW = GlobalConfig::getPeakBandwidthMBs()/1024;
     double avgBW = (totalDataVolumeBytes / totalSecsElapsed) / (1024.0 * 1024.0 * 1024.0);
     qDebug() << "average aggregate DRAM bandwidth: " << avgBW << "GB/s (" << 100*avgBW/peakBW  << "% of peak, which is " << peakBW << " GB∕s)";
+    qDebug() << "total responses generated: " << m_latencySamples;
 
     // m_DRAMSim->printStats(true);
 }

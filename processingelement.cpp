@@ -1,6 +1,7 @@
 #include <QSet>
 #include <QDebug>
 #include "processingelement.h"
+#include "utilities.h"
 
 
 ProcessingElement::ProcessingElement(sc_module_name name, int peID, int maxOutstandingRequests, int cacheWordsTotal,
@@ -43,9 +44,19 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
     // assume SpMV data linearly laid out in memory
     // TODO support interleaved data mode?
     quint64 rowPtrStart = 0;
+
     quint64 colIndStart = rowPtrStart + sizeof(VectorIndex)*(spmv->rowCount()+1);
+    if(colIndStart % DRAM_ACCESS_WIDTH_BYTES != 0)    // ensure start addresses are aligned
+        colIndStart += DRAM_ACCESS_WIDTH_BYTES - (colIndStart % DRAM_ACCESS_WIDTH_BYTES);
+
     quint64 matrixValStart = colIndStart + sizeof(VectorIndex)*(spmv->nzCount());
+    if(matrixValStart % DRAM_ACCESS_WIDTH_BYTES != 0)    // ensure start addresses are aligned
+        matrixValStart += DRAM_ACCESS_WIDTH_BYTES - (matrixValStart % DRAM_ACCESS_WIDTH_BYTES);
+
     quint64 denseVecStart = matrixValStart + sizeof(VectorValue)*(spmv->nzCount());
+    if(denseVecStart % DRAM_ACCESS_WIDTH_BYTES != 0)    // ensure start addresses are aligned
+        denseVecStart += DRAM_ACCESS_WIDTH_BYTES - (denseVecStart % DRAM_ACCESS_WIDTH_BYTES);
+
 
     // assigns local start addresses (for this particular PE)
     m_rowPtrBase = rowPtrStart + startingRow * sizeof(VectorIndex);
@@ -61,6 +72,12 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
 
     m_peNZCount = m_vectorIndexList.size();
     m_peRowCount = m_rowLenList.size();
+
+    // we round this to an even number to not have to deal with
+    // corner cases regarding memory access alignment
+    m_peNZCount = m_peNZCount - (m_peNZCount % 2);
+
+    // TODO do the same for the row count?
 }
 
 ProcessingElement::~ProcessingElement()
@@ -163,15 +180,21 @@ void ProcessingElement::colIndAddrGen()
     // this is separate from matrixValueAddrGen since the FIFOs may drain at different rates
     // as a performance optimization it should be possible to combine them into the same SC_THREAD though
 
+    // TODO we assume 8 byte DIMM interface here, make parametrizable?
+    // when the size of each column index is smaller than the DRAM interface size,
+    // we generate fewer colind requests
+    int colIndsPerRequest = ( DRAM_ACCESS_WIDTH_BYTES / sizeof(VectorIndex) );
     quint64 nzCount = m_peNZCount;
 
-    // TODO we should generate only half the number of colind requests (every other)
-    // since each colind req gives 2 dv reqs
-    while(nzCount)
+    // must ensure nzCount is divisable by colIndsPerRequest -- done during work assignment
+    while(nzCount > 0)
     {
         // fill in as many addresses as possible into the FIFO
         while(m_colIndAddr->nb_write(m_colIndBase + (m_peNZCount-nzCount) * m_colIndStride))
-            nzCount--;
+            nzCount -= colIndsPerRequest;
+
+        // should not become negative
+        sc_assert(nzCount >= 0);
 
         wait(PE_CLOCK_CYCLE);
     }
@@ -179,15 +202,18 @@ void ProcessingElement::colIndAddrGen()
 
 void ProcessingElement::denseVectorAddrGen()
 {
-    // each colIndValue actually translates into 2 denseVectorAddress
     // this SC_METHOD gets triggered every time a colIndValue is written
 
     // TODO add cache support here - for cache hits, bypass memory port and
     // write to denseVectorValues directly. for cache misses, watch the output of
     // denseVectorValues and add them to cache.
 
-    // TODO dvA FIFO should have >1 for generating 2 requests
-    if(m_denseVectorAddr->num_free() > 0 && m_colIndValue->num_available() > 0)
+    // each colIndValue actually translates into multiple denseVectorAddress, so we need
+    // at least so many free spaces in the denseVectorAddr FIFO
+
+    int colIndsPerRequest = ( DRAM_ACCESS_WIDTH_BYTES / sizeof(VectorIndex) );
+
+    if(m_denseVectorAddr->num_free() >= colIndsPerRequest && m_colIndValue->num_available() > 0)
     {
         quint64 ind =  0;
 
@@ -196,14 +222,16 @@ void ProcessingElement::denseVectorAddrGen()
         // convert address back into col index index
         VectorIndex baseV = (ind - m_colIndBase) / m_colIndStride;
         // lookup dense vector index from internal table
-        VectorIndex dvInd = m_vectorIndexList[baseV];
-        quint64 dvAddr = m_denseVecBase + dvInd * m_denseVecStride;
-        // write dv address
-        sc_assert(m_denseVectorAddr->nb_write(dvAddr));
+        // remember to generate multiple requests
+        // TODO generate these requests based on DRAM_ACCESS_WIDTH_BYTES
+        VectorIndex dvInd1 = m_vectorIndexList[baseV];
+        VectorIndex dvInd2 = m_vectorIndexList[baseV+1];
+        quint64 dvAddr1 = m_denseVecBase + dvInd1 * m_denseVecStride;
+        quint64 dvAddr2 = m_denseVecBase + dvInd2 * m_denseVecStride;
 
-        // TODO actually generate 2 addresses here
-        /*VectorIndex dvInd1 = m_vectorIndexList[2*baseV];
-        VectorIndex dvInd2 = m_vectorIndexList[2*baseV+1];*/
+        // write dv address
+        sc_assert(m_denseVectorAddr->nb_write(dvAddr1));
+        sc_assert(m_denseVectorAddr->nb_write(dvAddr2));
     }
 }
 
