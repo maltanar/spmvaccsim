@@ -1,8 +1,10 @@
 #include "burstmemoryport.h"
 
-BurstMemoryPort::BurstMemoryPort(sc_module_name name, int portId, MemRequestTag tag, MemorySystem * memSys, int mshrCount)
+BurstMemoryPort::BurstMemoryPort(sc_module_name name, int portId, MemRequestTag tag, MemorySystem * memSys, int mshrCount, int peDataUnitSize)
     : MemoryPort(name, portId, tag, memSys, mshrCount)
 {
+    m_peDataUnitSize = peDataUnitSize;
+    m_peDataUnitsPerBurst = (DRAM_ACCESS_WIDTH_BYTES / peDataUnitSize) * GlobalConfig::getDRAMConfig().burstLength;
 }
 
 quint64 BurstMemoryPort::alignStartAddressForBurst(quint64 addr)
@@ -19,7 +21,7 @@ void BurstMemoryPort::createRequests()
     // must ensure input FIFOs generate addresses quickly enough in order not to become a bottleneck
 
     int maxReqFIFOtoMSHRPerCycle = m_maxReqFIFOtoMSHRPerCycle;
-    while(peInput.num_available() >= MEMPORT_WORDS_PER_BURST && m_availableMSHRCount > 0)
+    while(peInput.num_available() >= m_peDataUnitsPerBurst && m_availableMSHRCount > 0)
     {
         // actually create a request for the first entrty
         quint64 prev = peInput.read(), now = 0;
@@ -27,10 +29,11 @@ void BurstMemoryPort::createRequests()
         addOutstandingRequest(prev);
 
         // just get rid of the following n-1 entries (included in burst read command)
-        for(int i = 0; i < MEMPORT_WORDS_PER_BURST-1; i++)
+        for(int i = 0; i < m_peDataUnitsPerBurst-1; i++)
         {
             now = peInput.read();
-            sc_assert(prev + DRAM_ACCESS_WIDTH_BYTES == now);  // make sure requests are consecutive, otherwise burst doesn't make sense
+            // make sure requests are consecutive, otherwise burst doesn't make sense
+            sc_assert(prev + m_peDataUnitSize == now);
             prev = now;
         }
 
@@ -75,15 +78,15 @@ void BurstMemoryPort::handleResponses()
     // move responses to output FIFO
     int maxRespFromMemSysPerCycle = m_maxRespFromMemSysPerCycle;
 
-    while(m_memSysResponseFIFO->num_available() > 0 && peOutput.num_free() >= MEMPORT_WORDS_PER_BURST)
+    while(m_memSysResponseFIFO->num_available() > 0 && peOutput.num_free() >= m_peDataUnitsPerBurst)
     {
         MemoryOperation * op = m_memSysResponseFIFO->read();
         m_responses++;
 
         // add consecutive entries from burst
-        for(int i = 0; i < MEMPORT_WORDS_PER_BURST; i++)
+        for(int i = 0; i < m_peDataUnitsPerBurst; i++)
         {
-            peOutput.write(op->address + DRAM_ACCESS_WIDTH_BYTES * i);
+            peOutput.write(op->address + m_peDataUnitSize * i);
         }
 
         // TODO log statistics

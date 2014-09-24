@@ -16,7 +16,8 @@ public:
                     int portId,              // identifier for this port
                     MemRequestTag tag,       // tag to identify requests from this port
                     MemorySystem * memSys,   // target memory system
-                    int mshrCount);          // number of MSHRs
+                    int mshrCount,           // number of MSHRs
+                    int peDataUnitSize = DRAM_ACCESS_WIDTH_BYTES);     // data unit size for PE
 
     static quint64 alignStartAddressForBurst(quint64 addr);
 
@@ -24,6 +25,8 @@ protected:
     virtual void createRequests();
     virtual void issueRequests();
     virtual void handleResponses();
+
+    int m_peDataUnitSize, m_peDataUnitsPerBurst;
 };
 
 #endif // BURSTMEMORYPORT_H
