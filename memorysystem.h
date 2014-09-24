@@ -55,7 +55,7 @@ protected:
 
 
     // per-epoch statistics
-    double m_numEpochSamples;
+    double m_numEpochSamples, m_epochTotalDataVolume;
     QMap<MemRequestTag, double> m_epochSamplesOfType;
     QMap<MemRequestTag, sc_time> m_epochLatencySamplesOfType;
 

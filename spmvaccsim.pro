@@ -30,7 +30,8 @@ SOURCES += main.cpp\
     DRAMSim2/SimulatorObject.cpp \
     DRAMSim2/Transaction.cpp \
     spmvocmsimulation.cpp \
-    memoryport.cpp
+    memoryport.cpp \
+    burstmemoryport.cpp
 
 HEADERS  += spmvoperation.h \
     utilities.h \
@@ -55,7 +56,8 @@ HEADERS  += spmvoperation.h \
     DRAMSim2/SystemConfiguration.h \
     DRAMSim2/Transaction.h \
     spmvocmsimulation.h \
-    memoryport.h
+    memoryport.h \
+    burstmemoryport.h
 
 SYSTEMC_ROOT = /home/maltanar/systemc
 SYSTEMC_ARCH = linux64

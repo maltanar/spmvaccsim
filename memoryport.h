@@ -32,9 +32,9 @@ public:
 
 protected:
     virtual quint64 translateToAddress(quint64 val);
-    void createRequests();
-    void issueRequests();
-    void handleResponses();
+    virtual void createRequests();
+    virtual void issueRequests();
+    virtual void handleResponses();
 
     MemorySystem * m_memSys;
     int m_portID, m_mshrCount;

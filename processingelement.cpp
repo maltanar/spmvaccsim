@@ -45,23 +45,21 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
     quint64 rowPtrStart = 0;
 
     quint64 colIndStart = rowPtrStart + sizeof(VectorIndex)*(spmv->rowCount()+1);
-    if(colIndStart % DRAM_ACCESS_WIDTH_BYTES != 0)    // ensure start addresses are aligned
-        colIndStart += DRAM_ACCESS_WIDTH_BYTES - (colIndStart % DRAM_ACCESS_WIDTH_BYTES);
+    colIndStart = BurstMemoryPort::alignStartAddressForBurst(colIndStart);
 
     quint64 matrixValStart = colIndStart + sizeof(VectorIndex)*(spmv->nzCount());
-    if(matrixValStart % DRAM_ACCESS_WIDTH_BYTES != 0)    // ensure start addresses are aligned
-        matrixValStart += DRAM_ACCESS_WIDTH_BYTES - (matrixValStart % DRAM_ACCESS_WIDTH_BYTES);
+    matrixValStart = BurstMemoryPort::alignStartAddressForBurst(matrixValStart);
 
+    // won't do burst accesses on dense vec, but just in case...
     quint64 denseVecStart = matrixValStart + sizeof(VectorValue)*(spmv->nzCount());
-    if(denseVecStart % DRAM_ACCESS_WIDTH_BYTES != 0)    // ensure start addresses are aligned
-        denseVecStart += DRAM_ACCESS_WIDTH_BYTES - (denseVecStart % DRAM_ACCESS_WIDTH_BYTES);
+    denseVecStart = BurstMemoryPort::alignStartAddressForBurst(denseVecStart);
 
 
     // assigns local start addresses (for this particular PE)
-    m_rowPtrBase = rowPtrStart + startingRow * sizeof(VectorIndex);
-    m_matrixValBase = matrixValStart + startingNZ * sizeof(VectorValue);
-    m_colIndBase = colIndStart + startingNZ * sizeof(VectorIndex);
-    m_denseVecBase = denseVecStart;
+    m_rowPtrBase = BurstMemoryPort::alignStartAddressForBurst(rowPtrStart + startingRow * sizeof(VectorIndex));
+    m_matrixValBase = BurstMemoryPort::alignStartAddressForBurst(matrixValStart + startingNZ * sizeof(VectorValue));
+    m_colIndBase = BurstMemoryPort::alignStartAddressForBurst(colIndStart + startingNZ * sizeof(VectorIndex));
+    m_denseVecBase = BurstMemoryPort::alignStartAddressForBurst(denseVecStart);
 
     // set defauls for memory strides
     m_rowPtrStride = sizeof(VectorIndex);
@@ -72,11 +70,11 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
     m_peNZCount = m_vectorIndexList.size();
     m_peRowCount = m_rowLenList.size();
 
-    // we round this to an even number to not have to deal with
+    // we round this to an 8n number to not have to deal with
     // corner cases regarding memory access alignment
-    m_peNZCount = m_peNZCount - (m_peNZCount % 2);
-
-    // TODO do the same for the row count?
+    // TODO is this the best way to do it though?
+    m_peNZCount = m_peNZCount - (m_peNZCount % MEMPORT_WORDS_PER_BURST);
+    // TODO should we do the same for row lengths as well?
 }
 
 ProcessingElement::~ProcessingElement()
@@ -135,9 +133,9 @@ void ProcessingElement::connectToMemorySystem(MemorySystem *memsys)
 
 void ProcessingElement::createPortsAndFIFOs()
 {
-    m_rowPtrPort = new MemoryPort("rpp", m_peID, memReqRowLen, m_memorySystem, m_maxOutstandingRequests);
-    m_matrixValuePort = new MemoryPort("mvp", 100 + m_peID, memReqMatrixData, m_memorySystem, m_maxOutstandingRequests);
-    m_colIndPort  = new MemoryPort("cip", 200 + m_peID, memReqColInd, m_memorySystem, m_maxOutstandingRequests);
+    m_rowPtrPort = new BurstMemoryPort("rpp", m_peID, memReqRowLen, m_memorySystem, m_maxOutstandingRequests);
+    m_matrixValuePort = new BurstMemoryPort("mvp", 100 + m_peID, memReqMatrixData, m_memorySystem, m_maxOutstandingRequests);
+    m_colIndPort  = new BurstMemoryPort("cip", 200 + m_peID, memReqColInd, m_memorySystem, m_maxOutstandingRequests);
     m_denseVectorPort = new MemoryPort("dvp", 300 + m_peID, memReqVectorData, m_memorySystem, m_maxOutstandingRequests);
 
     // TODO parametrize these FIFO lengths

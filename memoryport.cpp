@@ -119,7 +119,7 @@ void MemoryPort::issueRequests()
         if(m_mshrEntries[i].valid && !m_mshrEntries[i].memRequestIssued && m_memSys->canAddRequest())
         {
             // issue request to memory system
-            MemoryOperation * op = makeReadRequest(m_portID, m_mshrEntries[i].address, m_reqTag);
+            MemoryOperation * op = makeReadRequest(m_portID, m_mshrEntries[i].address, m_reqTag, DRAM_ACCESS_WIDTH_BYTES);
             m_memSys->addRequest(op);
 
             // mark MSHR as issued

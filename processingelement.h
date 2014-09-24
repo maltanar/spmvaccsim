@@ -7,6 +7,7 @@
 #include "spmvoperation.h"
 #include "utilities.h"
 #include "memoryport.h"
+#include "burstmemoryport.h"
 
 class SpMVOCMSimulation;
 
@@ -43,9 +44,9 @@ protected:
 
     MemorySystem * m_memorySystem;
 
-    MemoryPort * m_rowPtrPort;
-    MemoryPort * m_matrixValuePort;
-    MemoryPort * m_colIndPort;
+    BurstMemoryPort * m_rowPtrPort;
+    BurstMemoryPort * m_matrixValuePort;
+    BurstMemoryPort * m_colIndPort;
     MemoryPort * m_denseVectorPort;
 
     sc_fifo<quint64> * m_rowPtrAddr, * m_rowPtrValueRaw, * m_rowPtrValue;
