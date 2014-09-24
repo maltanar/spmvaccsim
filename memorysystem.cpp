@@ -8,13 +8,13 @@ using namespace DRAMSim;
 double MemorySystem::m_powerSum[4];
 uint64_t MemorySystem::m_powerSamples;
 
-MemorySystem::MemorySystem(sc_module_name name, QMap<QString, QString> configOverrides) : sc_module(name)
+MemorySystem::MemorySystem(sc_module_name name) : sc_module(name)
 {
     m_systemConfigFile = "system.ini";
     m_megsOfMemory = GlobalConfig::getInstance().getMemorySizeMB();
 
     // convert the override map to std::map
-    QMapIterator<QString, QString> it(configOverrides);
+    QMapIterator<QString, QString> it(GlobalConfig::getInstance().getMemSysConfig());
     IniReader::OverrideMap overrideStdMap;
 
     while(it.hasNext())
@@ -237,7 +237,7 @@ void MemorySystem::runMemorySystem()
             // accesses must be at least as wide as the DRAM
             sc_assert(op->totalBytes >= DRAM_ACCESS_WIDTH_BYTES);
             Transaction * trans = new Transaction(op->isWrite ? DATA_WRITE : DATA_READ,
-                                                  op->address, NULL, op->totalBytes / DRAM_ACCESS_WIDTH_BYTES);
+                                                  op->address, NULL, 8);
 
             // add transaction to DRAMsim's queue
             m_DRAMSim->addTransaction(trans);

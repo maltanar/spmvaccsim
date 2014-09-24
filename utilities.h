@@ -83,6 +83,9 @@ class GlobalConfig
 
         static float getPeakBandwidthMBs();
 
+        static void setMemSysConfig(QMap<QString, QString> cfg);
+        QMap<QString, QString> getMemSysConfig();
+
 
     private:
         GlobalConfig();                   // Constructor? (the {} brackets) are needed here.
@@ -97,8 +100,7 @@ class GlobalConfig
 
         static QString m_dramChipType;
         static QMap<QString, DRAMChipInfo> m_chipInfo;
-        static QMap<QString, QString> m_configFiles;
-        static QMap<QString, int> m_memIOClkMHz;
+        static QMap<QString, QString> m_memSysConfig;
 };
 
 

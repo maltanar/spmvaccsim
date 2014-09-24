@@ -70,14 +70,16 @@ int sc_main(int argc, char **argv)
     QString dramType = parser.value(dramChipTypeOption);
     GlobalConfig::getInstance().setDRAMConfig(dramType);
 
-    QMap<QString, QString> memsysOverrides = getDefaultDRAMSimConfig();
+    QMap<QString, QString> memsysConfig = getDefaultDRAMSimConfig();
     QString overrideString;
 
     foreach(overrideString, parser.values(dramSimOverrideOption))
     {
         QStringList fields = overrideString.split("=");
-        memsysOverrides[fields[0]] = fields[1];
+        memsysConfig[fields[0]] = fields[1];
     }
+
+    GlobalConfig::setMemSysConfig(memsysConfig);
 
     if(parser.isSet(verboseDRAMSimOption))
         SHOW_SIM_OUTPUT=1;
@@ -111,7 +113,7 @@ int sc_main(int argc, char **argv)
         peCount = 1;
     }
 
-    SpMVOCMSimulation sim(spm, peCount, maxOutstandingReqs, cacheMode, cachePerPE, memsysOverrides, bypassFlags);
+    SpMVOCMSimulation sim(spm, peCount, maxOutstandingReqs, cacheMode, cachePerPE, bypassFlags);
 
     sim.run();
 

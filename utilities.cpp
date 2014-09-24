@@ -5,6 +5,7 @@ int GlobalConfig::m_peFreq;
 QString GlobalConfig::m_dramChipType;
 QMap<QString, DRAMChipInfo> GlobalConfig::m_chipInfo;
 int GlobalConfig::m_memorySizeMB;
+QMap<QString, QString> GlobalConfig::m_memSysConfig;
 
 
 QString getMatrixFilename(QString matrixName)
@@ -128,6 +129,16 @@ float GlobalConfig::getPeakBandwidthMBs()
 {
     // TODO number of channels important here
     return 2.0 * (float)m_chipInfo[m_dramChipType].ioClkMHz * DRAM_ACCESS_WIDTH_BYTES;
+}
+
+void GlobalConfig::setMemSysConfig(QMap<QString, QString> cfg)
+{
+    m_memSysConfig = cfg;
+}
+
+QMap<QString, QString> GlobalConfig::getMemSysConfig()
+{
+    return m_memSysConfig;
 }
 
 GlobalConfig::GlobalConfig()

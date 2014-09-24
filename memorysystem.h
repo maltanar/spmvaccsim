@@ -13,7 +13,7 @@ class MemorySystem : public sc_module
     SC_HAS_PROCESS(MemorySystem);
 
 public:
-    MemorySystem(sc_module_name name, QMap<QString,QString> configOverrides);
+    MemorySystem(sc_module_name name);
     ~MemorySystem();
 
     void setRequestFIFO(sc_fifo<MemoryOperation *> * fifo);

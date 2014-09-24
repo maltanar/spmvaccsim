@@ -9,7 +9,7 @@
 #include <QSqlError>
 
 SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOutstandingMemReqsPerPE,
-                                     CacheMode cacheMode, uint64_t cacheWordsPerPE, QMap<QString, QString> memsysOverrides,
+                                     CacheMode cacheMode, uint64_t cacheWordsPerPE,
                                      QList<MemRequestTag> bypass) :
     sc_module(sc_module_name("top"))
 {
@@ -27,9 +27,9 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
     m_cacheWordsPerPE = cacheWordsPerPE;
 
     // instantiate the memory system simulator (DRAMsim)
-    // TODO move request directly inside MemorySystem?
+    // TODO move request FIFO directly inside MemorySystem?
     m_requestFIFO = new sc_fifo<MemoryOperation *>(m_reqFIFOSize);
-    m_memorySystem = new MemorySystem("memsys", memsysOverrides);
+    m_memorySystem = new MemorySystem("memsys");
     m_memorySystem->setRequestFIFO(m_requestFIFO);
 
     // load the sparse matrix to create the access patterns
