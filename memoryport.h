@@ -57,6 +57,8 @@ protected:
     int m_availableMSHRCount;
     void addOutstandingRequest(quint64 val);
     int findMSHRForResponse(quint64 addr);
+
+    quint64 m_requests, m_responses;
 };
 
 #endif // MEMORYPORT_H

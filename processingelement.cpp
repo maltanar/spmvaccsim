@@ -54,7 +54,6 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
     quint64 denseVecStart = matrixValStart + sizeof(VectorValue)*(spmv->nzCount());
     denseVecStart = BurstMemoryPort::alignStartAddressForBurst(denseVecStart);
 
-
     // assigns local start addresses (for this particular PE)
     m_rowPtrBase = BurstMemoryPort::alignStartAddressForBurst(rowPtrStart + startingRow * sizeof(VectorIndex));
     m_matrixValBase = BurstMemoryPort::alignStartAddressForBurst(matrixValStart + startingNZ * sizeof(VectorValue));
@@ -70,11 +69,19 @@ void ProcessingElement::assignWork(SpMVOperation *spmv, int peCount)
     m_peNZCount = m_vectorIndexList.size();
     m_peRowCount = m_rowLenList.size();
 
-    // we round this to an 8n number to not have to deal with
+    // we round this to an 16n number to not have to deal with
     // corner cases regarding memory access alignment
+    // why round down? --> we generate 2 colinds per request and 8 colinds per burst
+    // ensure we stay within boundaries of the accessed element list
     // TODO is this the best way to do it though?
-    m_peNZCount = m_peNZCount - (m_peNZCount % MEMPORT_WORDS_PER_BURST);
-    // TODO should we do the same for row lengths as well?
+    m_peNZCount = m_peNZCount - (m_peNZCount % ( VECINDS_PER_WORD * MEMPORT_WORDS_PER_BURST));
+
+    // round rowlengths up the same way
+    // why up? rounding down risks preventing the PE from finishing since
+    // progress depends on generating a matching number of rowlen values and NZs
+    // this won't cause boundary checking problems for the row lengths array, since that is
+    // explicitly checked inside rowPtrValueSplit
+    m_peRowCount = m_peRowCount + VECINDS_PER_WORD * MEMPORT_WORDS_PER_BURST - (m_peRowCount% ( VECINDS_PER_WORD * MEMPORT_WORDS_PER_BURST));
 }
 
 ProcessingElement::~ProcessingElement()
@@ -172,13 +179,11 @@ void ProcessingElement::rowPtrAddrGen()
 {
     VectorIndex rowCount = m_peRowCount;
 
-    int rowPtrsPerWord = ( DRAM_ACCESS_WIDTH_BYTES / sizeof(VectorIndex) );
-
     while(rowCount > 0)
     {
         // fill in as many addresses as possible into the FIFO
-        while(m_rowPtrAddr->nb_write(m_rowPtrBase + (m_peRowCount-rowCount) * m_rowPtrStride))
-            rowCount -= rowPtrsPerWord;
+        while(m_rowPtrAddr->nb_write(m_rowPtrBase + (m_peRowCount-rowCount) * m_rowPtrStride) && rowCount > 0)
+            rowCount -= VECINDS_PER_WORD;
 
         // drain rate for the address FIFO will eventually depend on the drain rate
         // of the value FIFO (rowPtrValue), which is determined by the progress() process
@@ -193,18 +198,15 @@ void ProcessingElement::rowPtrAddrGen()
 void ProcessingElement::rowPtrValueSplit()
 {
     // generates two (or more) row pointers from raw rowptr values from memory
-    int rowPtrsPerWord = ( DRAM_ACCESS_WIDTH_BYTES / sizeof(VectorIndex) );
 
-    if(m_rowPtrValue->num_free() >= rowPtrsPerWord && m_rowPtrValueRaw->num_available() > 0)
+    if(m_rowPtrValue->num_free() >= VECINDS_PER_WORD && m_rowPtrValueRaw->num_available() > 0)
     {
         VectorIndex rowNum = (m_rowPtrValueRaw->read() - m_rowPtrBase) / m_rowPtrStride;
 
-        sc_assert(m_rowPtrValue->nb_write(rowNum));
-
-        // TODO depends on DRAM_ACCESS_WIDTH_BYTES
-        // avoid shooting over the assigned rows to this PE
-        if(rowNum+1 < m_peRowCount)
-            sc_assert(m_rowPtrValue->nb_write(rowNum+1));
+        for(int i = 0; i < VECINDS_PER_WORD; i++)
+            // avoid shooting over the assigned rows to this PE
+            if(rowNum+i < m_peRowCount)
+                sc_assert(m_rowPtrValue->nb_write(rowNum));
     }
 }
 
@@ -230,15 +232,14 @@ void ProcessingElement::colIndAddrGen()
     // TODO we assume 8 byte DIMM interface here, make parametrizable?
     // when the size of each column index is smaller than the DRAM interface size,
     // we generate fewer colind requests
-    int colIndsPerRequest = ( DRAM_ACCESS_WIDTH_BYTES / sizeof(VectorIndex) );
     quint64 nzCount = m_peNZCount;
 
     // must ensure nzCount is divisable by colIndsPerRequest -- done during work assignment
     while(nzCount > 0)
     {
         // fill in as many addresses as possible into the FIFO
-        while(m_colIndAddr->nb_write(m_colIndBase + (m_peNZCount-nzCount) * m_colIndStride))
-            nzCount -= colIndsPerRequest;
+        while(m_colIndAddr->nb_write(m_colIndBase + (m_peNZCount-nzCount) * m_colIndStride) && nzCount > 0)
+            nzCount -= VECINDS_PER_WORD;
 
         // should not become negative
         sc_assert(nzCount >= 0);
@@ -258,9 +259,7 @@ void ProcessingElement::denseVectorAddrGen()
     // each colIndValue actually translates into multiple denseVectorAddress, so we need
     // at least so many free spaces in the denseVectorAddr FIFO
 
-    int colIndsPerRequest = ( DRAM_ACCESS_WIDTH_BYTES / sizeof(VectorIndex) );
-
-    if(m_denseVectorAddr->num_free() >= colIndsPerRequest && m_colIndValue->num_available() > 0)
+    if(m_denseVectorAddr->num_free() >= VECINDS_PER_WORD && m_colIndValue->num_available() > 0)
     {
         quint64 ind =  0;
 

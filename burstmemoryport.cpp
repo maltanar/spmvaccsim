@@ -55,6 +55,7 @@ void BurstMemoryPort::issueRequests()
             // issue request to memory system
             MemoryOperation * op = makeReadRequest(m_portID, m_mshrEntries[i].address, m_reqTag, MEMPORT_TOTAL_BURST_LEN);
             m_memSys->addRequest(op);
+            m_requests++;
 
             // mark MSHR as issued
             m_mshrEntries[i].memRequestIssued = true;
@@ -77,6 +78,7 @@ void BurstMemoryPort::handleResponses()
     while(m_memSysResponseFIFO->num_available() > 0 && peOutput.num_free() >= MEMPORT_WORDS_PER_BURST)
     {
         MemoryOperation * op = m_memSysResponseFIFO->read();
+        m_responses++;
 
         // add consecutive entries from burst
         for(int i = 0; i < MEMPORT_WORDS_PER_BURST; i++)

@@ -11,6 +11,10 @@ MemoryPort::MemoryPort(sc_module_name name, int portId, MemRequestTag tag, Memor
     m_reqTag = tag;
     m_bypassEnabled = false;
 
+    // statistics
+    m_requests = 0;
+    m_responses = 0;
+
     // set default rate control settings
     // TODO make these customizable
     m_maxReqFIFOtoMSHRPerCycle = 1;
@@ -122,6 +126,8 @@ void MemoryPort::issueRequests()
             MemoryOperation * op = makeReadRequest(m_portID, m_mshrEntries[i].address, m_reqTag, DRAM_ACCESS_WIDTH_BYTES);
             m_memSys->addRequest(op);
 
+            m_requests++;
+
             // mark MSHR as issued
             m_mshrEntries[i].memRequestIssued = true;
 
@@ -147,6 +153,8 @@ void MemoryPort::handleResponses()
     while(m_memSysResponseFIFO->num_available() > 0 && peOutput.num_free() > 0)
     {
         MemoryOperation * op = m_memSysResponseFIFO->read();
+
+        m_responses++;
 
         // TODO return actual data instead of the address
         peOutput.write(op->address);
