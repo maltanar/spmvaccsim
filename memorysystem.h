@@ -48,7 +48,7 @@ protected:
     QMap<int, sc_fifo<MemoryOperation *> * > m_responseFIFOs;
     QMap<DRAMSim::Transaction *, MemoryOperation *> m_reqsInFlight;
 
-    uint64_t m_latencySamples, m_latencySum;
+    uint64_t m_latencySamples, m_latencySum, m_dataVolumeSum;
 
     static double m_powerSum[4];
     static uint64_t m_powerSamples;

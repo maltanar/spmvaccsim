@@ -46,6 +46,7 @@ MemorySystem::MemorySystem(sc_module_name name) : sc_module(name)
 
     // statistics-related variables
     m_latencySamples = 0;
+    m_dataVolumeSum = 0;
     m_latencySum = 0;
     m_powerSamples = 0;
     m_powerSum[0] = m_powerSum[1] = m_powerSum[2] = m_powerSum[3] = 0;
@@ -179,6 +180,7 @@ void MemorySystem::addEpochSample(MemoryOperation *op)
     static sc_time lastEpoch = sc_time(0, SC_NS);
     m_numEpochSamples += 1.0;
     m_epochTotalDataVolume += op->desiredBytes;
+    m_dataVolumeSum += op->desiredBytes;
 
     m_epochSamplesOfType[op->tag] += 1.0;
     m_epochLatencySamplesOfType[op->tag] += op->latency;
@@ -260,10 +262,9 @@ void MemorySystem::runMemorySystem()
 
 void MemorySystem::printFinalStats()
 {
-    double totalDataVolumeBytes = 8.0 * m_latencySamples;
     double totalSecsElapsed = sc_time_stamp() / sc_time(1, SC_SEC);
     double peakBW = GlobalConfig::getPeakBandwidthMBs()/1024;
-    double avgBW = (totalDataVolumeBytes / totalSecsElapsed) / (1024.0 * 1024.0 * 1024.0);
+    double avgBW = (m_dataVolumeSum / totalSecsElapsed) / (1024.0 * 1024.0 * 1024.0);
     qDebug() << "average aggregate DRAM bandwidth: " << avgBW << "GB/s (" << 100*avgBW/peakBW  << "% of peak, which is " << peakBW << " GB∕s)";
     qDebug() << "total responses generated: " << m_latencySamples;
 
