@@ -45,9 +45,9 @@
 using namespace DRAMSim;
 using namespace std;
 
-BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, 
-		unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, 
-		ostream &dramsim_log_) :
+BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
+        unsigned col, unsigned rw, unsigned r, unsigned b, void *dat,
+        ostream &dramsim_log_, unsigned bl) :
 	dramsim_log(dramsim_log_),
 	busPacketType(packtype),
 	column(col),
@@ -55,7 +55,9 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr,
 	bank(b),
 	rank(r),
 	physicalAddress(physicalAddr),
-	data(dat)
+    data(dat),
+    burstLength(bl),
+    halfBurstLength(bl/2 + (bl % 2 == 0 ? 0 : 1))   // need at least one cycle for a single burst beat
 {}
 
 void BusPacket::print(uint64_t currentClockCycle, bool dataStart)

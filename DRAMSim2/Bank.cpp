@@ -88,7 +88,7 @@ void Bank::read(BusPacket *busPacket)
 	{
 		// the row hasn't been written before, so it isn't in the list
 		//if(SHOW_SIM_OUTPUT) DEBUG("== Warning - Read from previously unwritten row " << busPacket->row);
-		void *garbage = calloc(BL * (JEDEC_DATA_BUS_BITS/8),1);
+        void *garbage = calloc(busPacket->burstLength * (JEDEC_DATA_BUS_BITS/8),1);
 		((long *)garbage)[0] = 0xdeadbeef; // tracer value
 		busPacket->data = garbage;
 	}

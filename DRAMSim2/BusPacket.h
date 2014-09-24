@@ -62,11 +62,13 @@ public:
 	unsigned row;
 	unsigned bank;
 	unsigned rank;
+    unsigned burstLength;
+    unsigned halfBurstLength; // due to double data rate
 	uint64_t physicalAddress;
 	void *data;
 
 	//Functions
-	BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_);
+    BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, unsigned bl = BL);
 
 	void print();
 	void print(uint64_t currentClockCycle, bool dataStart);
