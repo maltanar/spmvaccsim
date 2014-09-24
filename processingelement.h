@@ -1,9 +1,6 @@
 #ifndef PROCESSINGELEMENT_H
 #define PROCESSINGELEMENT_H
 
-// TODO move all calculations involving this into the memory ports
-#define VECINDS_PER_WORD        (DRAM_ACCESS_WIDTH_BYTES/sizeof(VectorIndex))
-
 #include <systemc.h>
 #include <QList>
 #include "spmvocmsimulation.h"

@@ -3,7 +3,6 @@
 
 #include "memoryport.h"
 
-// TODO depends on DRAM width
 #define MEMPORT_WORDS_PER_BURST         (GlobalConfig::getDRAMConfig().burstLength)
 #define MEMPORT_TOTAL_BURST_LEN         (MEMPORT_WORDS_PER_BURST * DRAM_ACCESS_WIDTH_BYTES)
 
@@ -20,6 +19,8 @@ public:
                     int peDataUnitSize = DRAM_ACCESS_WIDTH_BYTES);     // data unit size for PE
 
     static quint64 alignStartAddressForBurst(quint64 addr);
+
+    int getPEDataUnitsPerBurst();
 
 protected:
     virtual void createRequests();

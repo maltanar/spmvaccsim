@@ -15,6 +15,11 @@ quint64 BurstMemoryPort::alignStartAddressForBurst(quint64 addr)
     return addr;
 }
 
+int BurstMemoryPort::getPEDataUnitsPerBurst()
+{
+    return m_peDataUnitsPerBurst;
+}
+
 void BurstMemoryPort::createRequests()
 {
     // only read in from input FIFO if we have enough addresses available for a burst
