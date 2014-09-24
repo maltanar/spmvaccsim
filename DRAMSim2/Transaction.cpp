@@ -43,10 +43,11 @@ using std::dec;
 
 namespace DRAMSim {
 
-Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat) :
+Transaction::Transaction(TransactionType transType, uint64_t addr, void *dat, unsigned burstLength) :
 	transactionType(transType),
 	address(addr),
-	data(dat)
+    data(dat),
+    burstLen(burstLength)
 {}
 
 Transaction::Transaction(const Transaction &t)
@@ -55,6 +56,7 @@ Transaction::Transaction(const Transaction &t)
 	  , data(NULL)
 	  , timeAdded(t.timeAdded)
 	  , timeReturned(t.timeReturned)
+      , burstLen(t.burstLen)
 {
 	#ifndef NO_STORAGE
 	ERROR("Data storage is really outdated and these copies happen in an \n improper way, which will eventually cause problems. Please send an \n email to dramninjas [at] gmail [dot] com if you need data storage");
@@ -66,11 +68,11 @@ ostream &operator<<(ostream &os, const Transaction &t)
 {
 	if (t.transactionType == DATA_READ)
 	{
-		os<<"T [Read] [0x" << hex << t.address << "]" << dec <<endl;
+        os<<"T [Read] [0x" << hex << t.address << ", BL=" << t.burstLen << "]" << dec <<endl;
 	}
 	else if (t.transactionType == DATA_WRITE)
 	{
-		os<<"T [Write] [0x" << hex << t.address << "] [" << dec << t.data << "]" <<endl;
+        os<<"T [Write] [0x" << hex << t.address << ", BL=" << t.burstLen << "] [" << dec << t.data << "]" <<endl;
 	}
 	else if (t.transactionType == RETURN_DATA)
 	{

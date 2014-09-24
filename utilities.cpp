@@ -13,7 +13,7 @@ QString getMatrixFilename(QString matrixName)
     return "/home/maltanar/spm-data/colinds/" + matrixName.replace("/", "-");
 }
 
-MemoryOperation * makeReadRequest(int origin, quint64 address, MemRequestTag tag)
+MemoryOperation * makeReadRequest(int origin, quint64 address, MemRequestTag tag, int totalBytes)
 {
     MemoryOperation * newOp = new MemoryOperation;
     newOp->address = address;
@@ -23,6 +23,7 @@ MemoryOperation * makeReadRequest(int origin, quint64 address, MemRequestTag tag
     newOp->origin = origin;
     newOp->latency = sc_time(0, SC_NS);
     newOp->tag = tag;
+    newOp->totalBytes = totalBytes;
 
     return newOp;
 }
