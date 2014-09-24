@@ -110,13 +110,13 @@ extern unsigned tCMD;
 extern unsigned NUM_DEVICES;
 
 //same bank
-#define READ_TO_PRE_DELAY(hBL) (AL+(hBL)+ max(tRTP,tCCD)-tCCD)
-#define WRITE_TO_PRE_DELAY(hBL) (WL+(hBL)+tWR)
-#define READ_TO_WRITE_DELAY(hBL) (RL+(hBL)+tRTRS-WL)
+#define READ_TO_PRE_DELAY (AL+BL/2+ max(tRTP,tCCD)-tCCD)
+#define WRITE_TO_PRE_DELAY (WL+BL/2+tWR)
+#define READ_TO_WRITE_DELAY (RL+BL/2+tRTRS-WL)
 #define READ_AUTOPRE_DELAY (AL+tRTP+tRP)
-#define WRITE_AUTOPRE_DELAY(hBL) (WL+(hBL)+tWR+tRP)
-#define WRITE_TO_READ_DELAY_B(hBL) (WL+(hBL)+tWTR) //interbank
-#define WRITE_TO_READ_DELAY_R(hBL) (WL+(hBL)+tRTRS-RL) //interrank
+#define WRITE_AUTOPRE_DELAY (WL+BL/2+tWR+tRP)
+#define WRITE_TO_READ_DELAY_B (WL+BL/2+tWTR) //interbank
+#define WRITE_TO_READ_DELAY_R (WL+BL/2+tRTRS-RL) //interrank
 
 extern unsigned JEDEC_DATA_BUS_BITS;
 

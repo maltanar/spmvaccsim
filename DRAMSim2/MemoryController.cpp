@@ -66,7 +66,7 @@ MemoryController::MemoryController(MemorySystem *parent, CSVWriter &csvOut_, ost
 		commandQueue(bankStates, dramsim_log_),
 		poppedBusPacket(NULL),
 		csvOut(csvOut_),
-        totalTransactions(0), totalTransactionVolume(0),
+		totalTransactions(0),
 		refreshRank(0)
 {
 	//get handle on parent
@@ -90,9 +90,6 @@ MemoryController::MemoryController(MemorySystem *parent, CSVWriter &csvOut_, ost
 	totalWritesPerBank = vector<uint64_t>(NUM_RANKS*NUM_BANKS,0);
 	totalReadsPerRank = vector<uint64_t>(NUM_RANKS,0);
 	totalWritesPerRank = vector<uint64_t>(NUM_RANKS,0);
-
-    totalVolumePerBank = vector<uint64_t>(NUM_RANKS*NUM_BANKS,0);
-    totalVolumePerRank = vector<uint64_t>(NUM_RANKS,0);;
 
 	writeDataCountdown.reserve(NUM_RANKS);
 	writeDataToSend.reserve(NUM_RANKS);
@@ -130,9 +127,8 @@ void MemoryController::receiveFromBus(BusPacket *bpacket)
 	}
 
 	//add to return read data queue
-    returnTransaction.push_back(new Transaction(RETURN_DATA, bpacket->physicalAddress, bpacket->data, bpacket->burstLength));
+	returnTransaction.push_back(new Transaction(RETURN_DATA, bpacket->physicalAddress, bpacket->data));
 	totalReadsPerBank[SEQUENTIAL(bpacket->rank,bpacket->bank)]++;
-    totalVolumePerBank[SEQUENTIAL(bpacket->rank,bpacket->bank)] += bpacket->burstLength * (JEDEC_DATA_BUS_BITS/8);
 
 	// this delete statement saves a mindboggling amount of memory
 	delete(bpacket);
@@ -254,12 +250,10 @@ void MemoryController::update()
 			}
 
 			outgoingDataPacket = writeDataToSend[0];
-            dataCyclesLeft = outgoingDataPacket->halfBurstLength;
+			dataCyclesLeft = BL/2;
 
-            totalTransactions++;
+			totalTransactions++;
 			totalWritesPerBank[SEQUENTIAL(writeDataToSend[0]->rank,writeDataToSend[0]->bank)]++;
-            // keep statistics depending on the burst length for this transaction
-            totalTransactionVolume += outgoingDataPacket->burstLength * (JEDEC_DATA_BUS_BITS/8);
 
 			writeDataCountdown.erase(writeDataCountdown.begin());
 			writeDataToSend.erase(writeDataToSend.begin());
@@ -295,7 +289,7 @@ void MemoryController::update()
 
 			writeDataToSend.push_back(new BusPacket(DATA, poppedBusPacket->physicalAddress, poppedBusPacket->column,
 			                                    poppedBusPacket->row, poppedBusPacket->rank, poppedBusPacket->bank,
-                                                poppedBusPacket->data, dramsim_log, poppedBusPacket->burstLength));
+			                                    poppedBusPacket->data, dramsim_log));
 			writeDataCountdown.push_back(WL);
 		}
 
@@ -314,7 +308,7 @@ void MemoryController::update()
 				{
 					PRINT(" ++ Adding Read energy to total energy");
 				}
-                burstEnergy[rank] += (IDD4R - IDD3N) * poppedBusPacket->halfBurstLength * NUM_DEVICES;
+				burstEnergy[rank] += (IDD4R - IDD3N) * BL/2 * NUM_DEVICES;
 				if (poppedBusPacket->busPacketType == READ_P) 
 				{
 					//Don't bother setting next read or write times because the bank is no longer active
@@ -322,11 +316,11 @@ void MemoryController::update()
 					bankStates[rank][bank].nextActivate = max(currentClockCycle + READ_AUTOPRE_DELAY,
 							bankStates[rank][bank].nextActivate);
 					bankStates[rank][bank].lastCommand = READ_P;
-                    bankStates[rank][bank].stateChangeCountdown = READ_TO_PRE_DELAY(poppedBusPacket->halfBurstLength);
+					bankStates[rank][bank].stateChangeCountdown = READ_TO_PRE_DELAY;
 				}
 				else if (poppedBusPacket->busPacketType == READ)
 				{
-                    bankStates[rank][bank].nextPrecharge = max(currentClockCycle + READ_TO_PRE_DELAY(poppedBusPacket->halfBurstLength),
+					bankStates[rank][bank].nextPrecharge = max(currentClockCycle + READ_TO_PRE_DELAY,
 							bankStates[rank][bank].nextPrecharge);
 					bankStates[rank][bank].lastCommand = READ;
 
@@ -341,15 +335,15 @@ void MemoryController::update()
 							//check to make sure it is active before trying to set (save's time?)
 							if (bankStates[i][j].currentBankState == RowActive)
 							{
-                                bankStates[i][j].nextRead = max(currentClockCycle + poppedBusPacket->halfBurstLength + tRTRS, bankStates[i][j].nextRead);
-                                bankStates[i][j].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY(poppedBusPacket->halfBurstLength),
+								bankStates[i][j].nextRead = max(currentClockCycle + BL/2 + tRTRS, bankStates[i][j].nextRead);
+								bankStates[i][j].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
 										bankStates[i][j].nextWrite);
 							}
 						}
 						else
 						{
-                            bankStates[i][j].nextRead = max(currentClockCycle + max(tCCD, poppedBusPacket->halfBurstLength), bankStates[i][j].nextRead);
-                            bankStates[i][j].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY(poppedBusPacket->halfBurstLength),
+							bankStates[i][j].nextRead = max(currentClockCycle + max(tCCD, BL/2), bankStates[i][j].nextRead);
+							bankStates[i][j].nextWrite = max(currentClockCycle + READ_TO_WRITE_DELAY,
 									bankStates[i][j].nextWrite);
 						}
 					}
@@ -369,14 +363,14 @@ void MemoryController::update()
 			case WRITE:
 				if (poppedBusPacket->busPacketType == WRITE_P) 
 				{
-                    bankStates[rank][bank].nextActivate = max(currentClockCycle + WRITE_AUTOPRE_DELAY(poppedBusPacket->halfBurstLength),
+					bankStates[rank][bank].nextActivate = max(currentClockCycle + WRITE_AUTOPRE_DELAY,
 							bankStates[rank][bank].nextActivate);
 					bankStates[rank][bank].lastCommand = WRITE_P;
-                    bankStates[rank][bank].stateChangeCountdown = WRITE_TO_PRE_DELAY(poppedBusPacket->halfBurstLength);
+					bankStates[rank][bank].stateChangeCountdown = WRITE_TO_PRE_DELAY;
 				}
 				else if (poppedBusPacket->busPacketType == WRITE)
 				{
-                    bankStates[rank][bank].nextPrecharge = max(currentClockCycle + WRITE_TO_PRE_DELAY(poppedBusPacket->halfBurstLength),
+					bankStates[rank][bank].nextPrecharge = max(currentClockCycle + WRITE_TO_PRE_DELAY,
 							bankStates[rank][bank].nextPrecharge);
 					bankStates[rank][bank].lastCommand = WRITE;
 				}
@@ -387,7 +381,7 @@ void MemoryController::update()
 				{
 					PRINT(" ++ Adding Write energy to total energy");
 				}
-                burstEnergy[rank] += (IDD4W - IDD3N) * poppedBusPacket->halfBurstLength * NUM_DEVICES;
+				burstEnergy[rank] += (IDD4W - IDD3N) * BL/2 * NUM_DEVICES;
 
 				for (size_t i=0;i<NUM_RANKS;i++)
 				{
@@ -397,15 +391,15 @@ void MemoryController::update()
 						{
 							if (bankStates[i][j].currentBankState == RowActive)
 							{
-                                bankStates[i][j].nextWrite = max(currentClockCycle + poppedBusPacket->halfBurstLength + tRTRS, bankStates[i][j].nextWrite);
-                                bankStates[i][j].nextRead = max(currentClockCycle + WRITE_TO_READ_DELAY_R(poppedBusPacket->halfBurstLength),
+								bankStates[i][j].nextWrite = max(currentClockCycle + BL/2 + tRTRS, bankStates[i][j].nextWrite);
+								bankStates[i][j].nextRead = max(currentClockCycle + WRITE_TO_READ_DELAY_R,
 										bankStates[i][j].nextRead);
 							}
 						}
 						else
 						{
-                            bankStates[i][j].nextWrite = max(currentClockCycle + max(poppedBusPacket->halfBurstLength, tCCD), bankStates[i][j].nextWrite);
-                            bankStates[i][j].nextRead = max(currentClockCycle + WRITE_TO_READ_DELAY_B(poppedBusPacket->halfBurstLength),
+							bankStates[i][j].nextWrite = max(currentClockCycle + max(BL/2, tCCD), bankStates[i][j].nextWrite);
+							bankStates[i][j].nextRead = max(currentClockCycle + WRITE_TO_READ_DELAY_B,
 									bankStates[i][j].nextRead);
 						}
 					}
@@ -539,13 +533,13 @@ void MemoryController::update()
 			//create activate command to the row we just translated
 			BusPacket *ACTcommand = new BusPacket(ACTIVATE, transaction->address,
 					newTransactionColumn, newTransactionRow, newTransactionRank,
-                    newTransactionBank, 0, dramsim_log, BL);
+					newTransactionBank, 0, dramsim_log);
 
 			//create read or write command and enqueue it
 			BusPacketType bpType = transaction->getBusPacketType();
 			BusPacket *command = new BusPacket(bpType, transaction->address,
 					newTransactionColumn, newTransactionRow, newTransactionRank,
-                    newTransactionBank, transaction->data, dramsim_log, transaction->burstLen);
+					newTransactionBank, transaction->data, dramsim_log);
 
 
 
@@ -690,8 +684,6 @@ void MemoryController::update()
 				insertHistogram(currentClockCycle-pendingReadTransactions[i]->timeAdded,rank,bank);
 				//return latency
 				returnReadData(pendingReadTransactions[i]);
-                // keep statistics
-                totalTransactionVolume += pendingReadTransactions[i]->burstLen * (JEDEC_DATA_BUS_BITS/8);
 
 				delete pendingReadTransactions[i];
 				pendingReadTransactions.erase(pendingReadTransactions.begin()+i);
@@ -799,7 +791,6 @@ void MemoryController::resetStats()
 			totalReadsPerBank[SEQUENTIAL(i,j)] = 0;
 			totalWritesPerBank[SEQUENTIAL(i,j)] = 0;
 			totalEpochLatency[SEQUENTIAL(i,j)] = 0;
-            totalVolumePerBank[SEQUENTIAL(i,j)] = 0;
 		}
 
 		burstEnergy[i] = 0;
@@ -807,7 +798,6 @@ void MemoryController::resetStats()
 		refreshEnergy[i] = 0;
 		backgroundEnergy[i] = 0;
 		totalReadsPerRank[i] = 0;
-        totalVolumePerRank[i] = 0;
 		totalWritesPerRank[i] = 0;
 	}
 }
@@ -819,8 +809,8 @@ void MemoryController::printStats(bool finalStats)
 	//if we are not at the end of the epoch, make sure to adjust for the actual number of cycles elapsed
 
 	uint64_t cyclesElapsed = (currentClockCycle % EPOCH_LENGTH == 0) ? EPOCH_LENGTH : currentClockCycle % EPOCH_LENGTH;
-    // unsigned bytesPerTransaction = (JEDEC_DATA_BUS_BITS*BL)/8;  // removed since we now support variable burst lengths, must be taken into account
-    uint64_t totalBytesTransferred = totalTransactionVolume;
+	unsigned bytesPerTransaction = (JEDEC_DATA_BUS_BITS*BL)/8;
+	uint64_t totalBytesTransferred = totalTransactions * bytesPerTransaction;
 	double secondsThisEpoch = (double)cyclesElapsed * tCK * 1E-9;
 
 	// only per rank
@@ -839,13 +829,11 @@ void MemoryController::printStats(bool finalStats)
 	{
 		for (size_t j=0; j<NUM_BANKS; j++)
 		{
-            // bandwidth[SEQUENTIAL(i,j)] = (((double)(totalReadsPerBank[SEQUENTIAL(i,j)]+totalWritesPerBank[SEQUENTIAL(i,j)]) * (double)bytesPerTransaction)/(1024.0*1024.0*1024.0)) / secondsThisEpoch;
-            bandwidth[SEQUENTIAL(i,j)] =((float)(totalVolumePerBank[SEQUENTIAL(i,j)])/(1024.0*1024.0*1024.0)) / secondsThisEpoch;
+			bandwidth[SEQUENTIAL(i,j)] = (((double)(totalReadsPerBank[SEQUENTIAL(i,j)]+totalWritesPerBank[SEQUENTIAL(i,j)]) * (double)bytesPerTransaction)/(1024.0*1024.0*1024.0)) / secondsThisEpoch;
 			averageLatency[SEQUENTIAL(i,j)] = ((float)totalEpochLatency[SEQUENTIAL(i,j)] / (float)(totalReadsPerBank[SEQUENTIAL(i,j)])) * tCK;
 			totalBandwidth+=bandwidth[SEQUENTIAL(i,j)];
 			totalReadsPerRank[i] += totalReadsPerBank[SEQUENTIAL(i,j)];
 			totalWritesPerRank[i] += totalWritesPerBank[SEQUENTIAL(i,j)];
-            totalVolumePerRank[i] += totalVolumePerBank[SEQUENTIAL(i,j)];
 		}
 	}
 #ifdef LOG_OUTPUT
@@ -866,11 +854,10 @@ void MemoryController::printStats(bool finalStats)
 	{
 
 		PRINT( "      -Rank   "<<r<<" : ");
-        PRINT( "        -Reads  : " << totalReadsPerRank[r]);
-        //PRINT( " ("<<totalReadsPerRank[r] * bytesPerTransaction<<" bytes)");
-        PRINT( "        -Writes : " << totalWritesPerRank[r]);
-        //PRINT( " ("<<totalWritesPerRank[r] * bytesPerTransaction<<" bytes)");
-        PRINT( "        - Total Volume : " << totalVolumePerRank[r] << " bytes" );
+		PRINTN( "        -Reads  : " << totalReadsPerRank[r]);
+		PRINT( " ("<<totalReadsPerRank[r] * bytesPerTransaction<<" bytes)");
+		PRINTN( "        -Writes : " << totalWritesPerRank[r]);
+		PRINT( " ("<<totalWritesPerRank[r] * bytesPerTransaction<<" bytes)");
 		for (size_t j=0;j<NUM_BANKS;j++)
 		{
 			PRINT( "        -Bandwidth / Latency  (Bank " <<j<<"): " <<bandwidth[SEQUENTIAL(r,j)] << " GB/s\t\t" <<averageLatency[SEQUENTIAL(r,j)] << " ns");

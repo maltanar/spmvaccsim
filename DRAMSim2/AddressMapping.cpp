@@ -33,11 +33,10 @@
 namespace DRAMSim
 {
 
-void addressMapping(uint64_t physicalAddress, unsigned &newTransactionChan, unsigned &newTransactionRank,
-                    unsigned &newTransactionBank, unsigned &newTransactionRow, unsigned &newTransactionColumn, unsigned burstLength)
+void addressMapping(uint64_t physicalAddress, unsigned &newTransactionChan, unsigned &newTransactionRank, unsigned &newTransactionBank, unsigned &newTransactionRow, unsigned &newTransactionColumn)
 {
 	uint64_t tempA, tempB;
-    unsigned transactionSize = (JEDEC_DATA_BUS_BITS/8)*burstLength;
+	unsigned transactionSize = (JEDEC_DATA_BUS_BITS/8)*BL; 
 	uint64_t transactionMask =  transactionSize - 1; //ex: (64 bit bus width) x (8 Burst Length) - 1 = 64 bytes - 1 = 63 = 0x3f mask
 	unsigned channelBitWidth = dramsim_log2(NUM_CHANS);
 	unsigned	rankBitWidth = dramsim_log2(NUM_RANKS);

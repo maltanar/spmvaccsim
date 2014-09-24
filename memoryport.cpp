@@ -119,8 +119,7 @@ void MemoryPort::issueRequests()
         if(m_mshrEntries[i].valid && !m_mshrEntries[i].memRequestIssued && m_memSys->canAddRequest())
         {
             // issue request to memory system
-            // TODO make burst length configurable
-            MemoryOperation * op = makeReadRequest(m_portID, m_mshrEntries[i].address, m_reqTag, DRAM_ACCESS_WIDTH_BYTES);
+            MemoryOperation * op = makeReadRequest(m_portID, m_mshrEntries[i].address, m_reqTag);
             m_memSys->addRequest(op);
 
             // mark MSHR as issued

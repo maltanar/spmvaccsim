@@ -33,7 +33,6 @@ typedef struct {
     quint64 address;
     quint64 data;
     int origin;
-    int totalBytes;
     sc_time latency;
     MemRequestTag tag;
 } MemoryOperation;
@@ -54,7 +53,7 @@ typedef struct {
     int numBanks;
 } DRAMChipInfo;
 
-MemoryOperation * makeReadRequest(int origin, quint64 address, MemRequestTag tag, int totalBytes);
+MemoryOperation * makeReadRequest(int origin, quint64 address, MemRequestTag tag);
 
 void freeRequest(MemoryOperation *req);
 

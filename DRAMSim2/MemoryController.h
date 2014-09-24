@@ -103,15 +103,12 @@ private:
 	unsigned dataCyclesLeft;
 
 	uint64_t totalTransactions;
-    uint64_t totalTransactionVolume;
 	vector<uint64_t> grandTotalBankAccesses; 
 	vector<uint64_t> totalReadsPerBank;
 	vector<uint64_t> totalWritesPerBank;
-    vector<uint64_t> totalVolumePerBank;
 
 	vector<uint64_t> totalReadsPerRank;
 	vector<uint64_t> totalWritesPerRank;
-    vector<uint64_t> totalVolumePerRank;
 
 
 	vector< uint64_t > totalEpochLatency;

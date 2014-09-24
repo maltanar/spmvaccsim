@@ -31,7 +31,7 @@
 #define ADDRESS_MAPPING_H
 namespace DRAMSim
 {
-    void addressMapping(uint64_t physicalAddress, unsigned &channel, unsigned &rank, unsigned &bank, unsigned &row, unsigned &col, unsigned burstLength = BL);
+	void addressMapping(uint64_t physicalAddress, unsigned &channel, unsigned &rank, unsigned &bank, unsigned &row, unsigned &col);
 }
 
 #endif

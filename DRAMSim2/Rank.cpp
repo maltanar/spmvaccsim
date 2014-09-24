@@ -105,11 +105,11 @@ void Rank::receiveFromBus(BusPacket *packet)
 		}
 
 		//update state table
-        bankStates[packet->bank].nextPrecharge = max(bankStates[packet->bank].nextPrecharge, currentClockCycle + READ_TO_PRE_DELAY(packet->halfBurstLength));
+		bankStates[packet->bank].nextPrecharge = max(bankStates[packet->bank].nextPrecharge, currentClockCycle + READ_TO_PRE_DELAY);
 		for (size_t i=0;i<NUM_BANKS;i++)
 		{
-            bankStates[i].nextRead = max(bankStates[i].nextRead, currentClockCycle + max(tCCD, packet->halfBurstLength));
-            bankStates[i].nextWrite = max(bankStates[i].nextWrite, currentClockCycle + READ_TO_WRITE_DELAY(packet->halfBurstLength));
+			bankStates[i].nextRead = max(bankStates[i].nextRead, currentClockCycle + max(tCCD, BL/2));
+			bankStates[i].nextWrite = max(bankStates[i].nextWrite, currentClockCycle + READ_TO_WRITE_DELAY);
 		}
 
 		//get the read data and put it in the storage which delays until the appropriate time (RL)
@@ -137,8 +137,8 @@ void Rank::receiveFromBus(BusPacket *packet)
 		for (size_t i=0;i<NUM_BANKS;i++)
 		{
 			//will set next read/write for all banks - including current (which shouldnt matter since its now idle)
-            bankStates[i].nextRead = max(bankStates[i].nextRead, currentClockCycle + max(packet->halfBurstLength, tCCD));
-            bankStates[i].nextWrite = max(bankStates[i].nextWrite, currentClockCycle + READ_TO_WRITE_DELAY(packet->halfBurstLength));
+			bankStates[i].nextRead = max(bankStates[i].nextRead, currentClockCycle + max(BL/2, tCCD));
+			bankStates[i].nextWrite = max(bankStates[i].nextWrite, currentClockCycle + READ_TO_WRITE_DELAY);
 		}
 
 		//get the read data and put it in the storage which delays until the appropriate time (RL)
@@ -163,11 +163,11 @@ void Rank::receiveFromBus(BusPacket *packet)
 		}
 
 		//update state table
-        bankStates[packet->bank].nextPrecharge = max(bankStates[packet->bank].nextPrecharge, currentClockCycle + WRITE_TO_PRE_DELAY(packet->halfBurstLength));
+		bankStates[packet->bank].nextPrecharge = max(bankStates[packet->bank].nextPrecharge, currentClockCycle + WRITE_TO_PRE_DELAY);
 		for (size_t i=0;i<NUM_BANKS;i++)
 		{
-            bankStates[i].nextRead = max(bankStates[i].nextRead, currentClockCycle + WRITE_TO_READ_DELAY_B(packet->halfBurstLength));
-            bankStates[i].nextWrite = max(bankStates[i].nextWrite, currentClockCycle + max(packet->halfBurstLength, tCCD));
+			bankStates[i].nextRead = max(bankStates[i].nextRead, currentClockCycle + WRITE_TO_READ_DELAY_B);
+			bankStates[i].nextWrite = max(bankStates[i].nextWrite, currentClockCycle + max(BL/2, tCCD));
 		}
 
 		//take note of where data is going when it arrives
@@ -188,11 +188,11 @@ void Rank::receiveFromBus(BusPacket *packet)
 
 		//update state table
 		bankStates[packet->bank].currentBankState = Idle;
-        bankStates[packet->bank].nextActivate = max(bankStates[packet->bank].nextActivate, currentClockCycle + WRITE_AUTOPRE_DELAY(packet->halfBurstLength));
+		bankStates[packet->bank].nextActivate = max(bankStates[packet->bank].nextActivate, currentClockCycle + WRITE_AUTOPRE_DELAY);
 		for (size_t i=0;i<NUM_BANKS;i++)
 		{
-            bankStates[i].nextWrite = max(bankStates[i].nextWrite, currentClockCycle + max(tCCD, packet->halfBurstLength));
-            bankStates[i].nextRead = max(bankStates[i].nextRead, currentClockCycle + WRITE_TO_READ_DELAY_B(packet->halfBurstLength));
+			bankStates[i].nextWrite = max(bankStates[i].nextWrite, currentClockCycle + max(tCCD, BL/2));
+			bankStates[i].nextRead = max(bankStates[i].nextRead, currentClockCycle + WRITE_TO_READ_DELAY_B);
 		}
 
 		//take note of where data is going when it arrives
@@ -325,7 +325,7 @@ void Rank::update()
 		// ready to go out on the bus
 
 		outgoingDataPacket = readReturnPacket[0];
-        dataCyclesLeft = outgoingDataPacket->halfBurstLength;
+		dataCyclesLeft = BL/2;
 
 		// remove the packet from the ranks
 		readReturnPacket.erase(readReturnPacket.begin());

@@ -234,10 +234,8 @@ void MemorySystem::runMemorySystem()
         {
             // pop the operation from the FIFO
             MemoryOperation * op = m_requests->read();
-            // accesses must be at least as wide as the DRAM
-            sc_assert(op->totalBytes >= DRAM_ACCESS_WIDTH_BYTES);
             Transaction * trans = new Transaction(op->isWrite ? DATA_WRITE : DATA_READ,
-                                                  op->address, NULL, 8);
+                                                  op->address, NULL);
 
             // add transaction to DRAMsim's queue
             m_DRAMSim->addTransaction(trans);
