@@ -185,7 +185,7 @@ void MemorySystem::addEpochSample(MemoryOperation *op)
 
     double peakBW = GlobalConfig::getPeakBandwidthMBs()/1024;
 
-    if(m_numEpochSamples == 10000)
+    if(m_numEpochSamples == 10000 && SHOW_SIM_OUTPUT)
     {
         // print statistics
         double epochLengthInSecs = (sc_time_stamp() - lastEpoch) / sc_time(1, SC_SEC);
