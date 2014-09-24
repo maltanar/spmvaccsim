@@ -68,7 +68,7 @@ public:
 	void *data;
 
 	//Functions
-    BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, unsigned bl = BL);
+    BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r, unsigned b, void *dat, ostream &dramsim_log_, unsigned bl);
 
 	void print();
 	void print(uint64_t currentClockCycle, bool dataStart);
