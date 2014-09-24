@@ -97,6 +97,11 @@ void GlobalConfig::setDRAMConfig(QString dramChipType)
     m_dramChipType = dramChipType;
 }
 
+DRAMChipInfo GlobalConfig::getDRAMConfig()
+{
+    return m_chipInfo[m_dramChipType];
+}
+
 QString GlobalConfig::getMemConfigFile()
 {
     return m_chipInfo[m_dramChipType].configFileName + ".ini";
@@ -207,4 +212,14 @@ GlobalConfig::GlobalConfig()
     m_chipInfo["DDR3-800-32M-8x8"].capacityMB = 256;
     m_chipInfo["DDR3-1333-64M-8x4"].capacityMB = 256;
 
+    m_chipInfo["DDR2-667-16M-8x8"].burstLength = 4;
+    m_chipInfo["DDR2-667-32M-4x4"].burstLength = 4;
+    m_chipInfo["DDR2-800-32M-8x4"].burstLength = 4;
+    m_chipInfo["DDR3-1333-8M-8x16"].burstLength = 8;
+    m_chipInfo["DDR3-1333-16M-8x8"].burstLength = 8;
+    m_chipInfo["DDR3-1333-32M-8x4"].burstLength = 8;
+    m_chipInfo["DDR3-1600-32M-8x4"].burstLength = 8;
+    m_chipInfo["DDR3-1333-32M-8x8"].burstLength = 8;
+    m_chipInfo["DDR3-800-32M-8x8"].burstLength = 8;
+    m_chipInfo["DDR3-1333-64M-8x4"].burstLength = 8;
 }

@@ -51,6 +51,7 @@ typedef struct {
     int capacityMB;
     int interfaceWidthBits;
     int numBanks;
+    int burstLength;
 } DRAMChipInfo;
 
 MemoryOperation * makeReadRequest(int origin, quint64 address, MemRequestTag tag);
@@ -74,6 +75,8 @@ class GlobalConfig
         static int getMemorySizeMB();
 
         static void setDRAMConfig(QString dramChipType);
+        static DRAMChipInfo getDRAMConfig();
+
         static QString getMemConfigFile();
         static int getMemIOClkFreqMHz();
 
