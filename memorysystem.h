@@ -53,6 +53,15 @@ protected:
     static double m_powerSum[4];
     static uint64_t m_powerSamples;
 
+
+    // per-epoch statistics
+    double m_numEpochSamples;
+    QMap<MemRequestTag, double> m_epochSamplesOfType;
+    QMap<MemRequestTag, sc_time> m_epochLatencySamplesOfType;
+
+    void addEpochSample(MemoryOperation * op);
+
+
 };
 
 #endif // MEMORYSYSTEM_H

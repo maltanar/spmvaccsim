@@ -49,6 +49,18 @@ MemorySystem::MemorySystem(sc_module_name name, QMap<QString, QString> configOve
     m_latencySum = 0;
     m_powerSamples = 0;
     m_powerSum[0] = m_powerSum[1] = m_powerSum[2] = m_powerSum[3] = 0;
+
+    m_epochSamplesOfType[memReqColInd] = 0.0;
+    m_epochSamplesOfType[memReqMatrixData] = 0.0;
+    m_epochSamplesOfType[memReqRowLen] = 0.0;
+    m_epochSamplesOfType[memReqVectorData] = 0.0;
+
+    m_epochLatencySamplesOfType[memReqColInd] = sc_time(0, SC_NS);
+    m_epochLatencySamplesOfType[memReqMatrixData] = sc_time(0, SC_NS);
+    m_epochLatencySamplesOfType[memReqRowLen] = sc_time(0, SC_NS);
+    m_epochLatencySamplesOfType[memReqVectorData] = sc_time(0, SC_NS);
+
+    m_numEpochSamples = 0.0;
 }
 
 MemorySystem::~MemorySystem()
@@ -118,6 +130,8 @@ void MemorySystem::readComplete(unsigned id, uint64_t address, uint64_t clock_cy
     m_latencySum += (clock_cycle - t->timeAdded);
     m_latencySamples++;
 
+    addEpochSample(op);
+
     // DRAMsim will deallocate the Transaction
     // the originating PE will deallocate the MemoryOperation
 }
@@ -157,6 +171,52 @@ double MemorySystem::getAveragePowerRefresh()
 double MemorySystem::getAveragePowerActPre()
 {
     return m_powerSum[3] / (double) m_powerSamples;
+}
+
+void MemorySystem::addEpochSample(MemoryOperation *op)
+{
+    static sc_time lastEpoch = sc_time(0, SC_NS);
+    m_numEpochSamples += 1.0;
+
+    m_epochSamplesOfType[op->tag] += 1.0;
+    m_epochLatencySamplesOfType[op->tag] += op->latency;
+
+    double peakBW = GlobalConfig::getPeakBandwidthMBs()/1024;
+
+    if(m_numEpochSamples == 10000)
+    {
+        // print statistics
+        double epochLengthInSecs = (sc_time_stamp() - lastEpoch) / sc_time(1, SC_SEC);
+        double avgBW = (m_numEpochSamples*DRAM_ACCESS_WIDTH_BYTES / epochLengthInSecs) / (1024.0 * 1024.0 * 1024.0);
+
+        qDebug() << "*****************************************************************************************";
+        qDebug() << "average aggregate DRAM bandwidth: " << avgBW << "GB/s (" << 100*avgBW/peakBW  << "% of peak, which is " << peakBW << " GB∕s)";
+        qDebug() << "Percentage of requests in epoch:";
+        qDebug() << "Matrix data requests: " << 100*m_epochSamplesOfType[memReqMatrixData] / m_numEpochSamples << "%";
+        qDebug() << "Column index requests: " << 100* m_epochSamplesOfType[memReqColInd] / m_numEpochSamples << "%";
+        qDebug() << "Row pointer requests: " << 100* m_epochSamplesOfType[memReqRowLen] / m_numEpochSamples << "%";
+        qDebug() << "Vector data requests: " << 100* m_epochSamplesOfType[memReqVectorData] / m_numEpochSamples << "%";
+
+        qDebug() << "\nAverage latency by request type:";
+        qDebug() << "Matrix data requests: " << QString::number(((m_epochLatencySamplesOfType[memReqMatrixData] / m_epochSamplesOfType[memReqMatrixData])/sc_time(1,SC_NS))) << " ns";
+        qDebug() << "Column index requests: " << QString::number(((m_epochLatencySamplesOfType[memReqColInd] / m_epochSamplesOfType[memReqColInd])/sc_time(1,SC_NS))) << " ns";
+        qDebug() << "Row pointer requests: " << QString::number(((m_epochLatencySamplesOfType[memReqRowLen] / m_epochSamplesOfType[memReqRowLen])/sc_time(1,SC_NS))) << " ns";
+        qDebug() << "Vector data requests: " << QString::number(((m_epochLatencySamplesOfType[memReqVectorData] / m_epochSamplesOfType[memReqVectorData])/sc_time(1,SC_NS))) << " ns";
+
+        // reset counters
+        m_epochSamplesOfType[memReqColInd] = 0.0;
+        m_epochSamplesOfType[memReqMatrixData] = 0.0;
+        m_epochSamplesOfType[memReqRowLen] = 0.0;
+        m_epochSamplesOfType[memReqVectorData] = 0.0;
+
+        m_epochLatencySamplesOfType[memReqColInd] = sc_time(0, SC_NS);
+        m_epochLatencySamplesOfType[memReqMatrixData] = sc_time(0, SC_NS);
+        m_epochLatencySamplesOfType[memReqRowLen] = sc_time(0, SC_NS);
+        m_epochLatencySamplesOfType[memReqVectorData] = sc_time(0, SC_NS);
+
+        m_numEpochSamples = 0.0;
+        lastEpoch = sc_time_stamp();
+    }
 }
 
 double MemorySystem::getAverageReqRespLatency()
