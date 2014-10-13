@@ -43,7 +43,8 @@ SOURCES += main.cpp\
     vectorcachewrapper.cpp \
     vector-cache-src/verilated.cpp \
     vector-cache-src/VSimpleDMVectorCache.cpp \
-    vector-cache-src/VSimpleDMVectorCache__Syms.cpp
+    vector-cache-src/VSimpleDMVectorCache__Syms.cpp \
+    vectorcachetester.cpp
 
 HEADERS  += spmvoperation.h \
     utilities.h \
@@ -74,6 +75,7 @@ HEADERS  += spmvoperation.h \
     fifooutbreakout.h \
     vectorcachewrapper.h \
     vector-cache-src/VSimpleDMVectorCache.h \
-    vector-cache-src/VSimpleDMVectorCache__Syms.h
+    vector-cache-src/VSimpleDMVectorCache__Syms.h \
+    vectorcachetester.h
 
 LIBS += -lsystemc -lpthread
