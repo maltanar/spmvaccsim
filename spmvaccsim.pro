@@ -9,7 +9,15 @@ QT       += core sql
 TARGET = spmvaccsim
 TEMPLATE = app
 
-DEFINES += NO_STORAGE
+DEFINES += NO_STORAGE VL_PRINTF=printf VM_TRACE=0 VM_COVERAGE=0
+
+SYSTEMC_ROOT = /home/maltanar/systemc
+SYSTEMC_ARCH = linux64
+VERILATOR_ROOT = /usr/share/verilator
+
+QMAKE_INCDIR += $$SYSTEMC_ROOT/include $$VERILATOR_ROOT/include $$VERILATOR_ROOT/include/vltstd vector-cache-src
+QMAKE_LIBDIR += $$SYSTEMC_ROOT/lib-$$SYSTEMC_ARCH
+
 
 SOURCES += main.cpp\
     spmvoperation.cpp \
@@ -31,7 +39,11 @@ SOURCES += main.cpp\
     DRAMSim2/Transaction.cpp \
     spmvocmsimulation.cpp \
     memoryport.cpp \
-    burstmemoryport.cpp
+    burstmemoryport.cpp \
+    vectorcachewrapper.cpp \
+    vector-cache-src/verilated.cpp \
+    vector-cache-src/VSimpleDMVectorCache.cpp \
+    vector-cache-src/VSimpleDMVectorCache__Syms.cpp
 
 HEADERS  += spmvoperation.h \
     utilities.h \
@@ -57,12 +69,11 @@ HEADERS  += spmvoperation.h \
     DRAMSim2/Transaction.h \
     spmvocmsimulation.h \
     memoryport.h \
-    burstmemoryport.h
-
-SYSTEMC_ROOT = /home/maltanar/systemc
-SYSTEMC_ARCH = linux64
-
-QMAKE_INCDIR += $$SYSTEMC_ROOT/include
-QMAKE_LIBDIR += $$SYSTEMC_ROOT/lib-$$SYSTEMC_ARCH
+    burstmemoryport.h \
+    fifoinbreakout.h \
+    fifooutbreakout.h \
+    vectorcachewrapper.h \
+    vector-cache-src/VSimpleDMVectorCache.h \
+    vector-cache-src/VSimpleDMVectorCache__Syms.h
 
 LIBS += -lsystemc -lpthread

@@ -4,9 +4,10 @@
 #include <QString>
 #include <QMap>
 #include <systemc.h>
+#include "verilated.h"
 
-#define     VectorIndex         quint32
-#define     VectorValue         double
+#define     VectorIndex         unsigned int
+#define     VectorValue         unsigned long
 
 #define     PE_CLOCK_CYCLE      (sc_time(10, SC_NS) / ((float)(GlobalConfig::getInstance().getPEFreqMHz()) / 100.0   ) )
 #define     MEMC_CLOCK_CYCLE    (sc_time(3, SC_NS) / ((float)(GlobalConfig::getInstance().getMemIOClkFreqMHz()) / 333.0   ) )
