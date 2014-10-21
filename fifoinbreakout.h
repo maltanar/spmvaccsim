@@ -39,6 +39,7 @@ public:
             T data = (T) 0;
             sc_assert(fifoInput.nb_read(data));
             m_data = data;
+
         }
         else
             m_data = (T) 0;

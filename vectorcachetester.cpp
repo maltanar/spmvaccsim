@@ -7,6 +7,8 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
     readReqFIFO(RDREQ_FIFO_SIZE), readRspFIFO(RDRSP_FIFO_SIZE),
     memReadReqFIFO(MEMRDREQ_FIFO_SIZE), memReadRspFIFO(MEMRDRSP_FIFO_SIZE)
 {
+    simFinished = false;
+
     clk(clkSource);
 
     vecCache.clk(clk);
@@ -25,6 +27,12 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
     SC_CTHREAD(handleDRAM, clk.pos());
 }
 
+void VectorCacheTester::setAccessList(QList<VectorIndex> list)
+{
+    m_accessList = list;
+    m_accessListSize = list.size();
+}
+
 void VectorCacheTester::generateReset()
 {
     // assume active high reset
@@ -34,27 +42,29 @@ void VectorCacheTester::generateReset()
     reset = false;
     // notify other threads so they can start
     resetComplete.notify();
+    cout << "Reset completed at " << sc_time_stamp() << endl;
 }
 
 void VectorCacheTester::pushReadRequests()
 {
     wait(resetComplete);
+    wait(vecCache.cacheReady);
 
-    unsigned int reqsToPush = 100;
-
-    while(reqsToPush)
+    while(!m_accessList.empty())
     {
         wait(1);
-        readReqFIFO.write(reqsToPush * 5);
-        reqsToPush--;
+        readReqFIFO.write(m_accessList.first());
+        cout << "Request to " << m_accessList.first() << " written at " << sc_time_stamp() << endl;
+        m_accessList.removeFirst();
     }
 }
 
 void VectorCacheTester::pullReadResponses()
 {
     wait(resetComplete);
+    wait(vecCache.cacheReady);
 
-    unsigned int reqsToPop = 100;
+    unsigned int reqsToPop = m_accessListSize;
 
     while(reqsToPop)
     {
@@ -63,10 +73,49 @@ void VectorCacheTester::pullReadResponses()
         cout << "Response " << val << " at " << sc_time_stamp();
         reqsToPop--;
     }
+
+    // responses determine the finish condition
+    simFinished = true;
+
+    // print final cache stats
+    vecCache.printCacheStats();
+
+    sc_stop();
 }
 
 void VectorCacheTester::handleDRAM()
 {
     wait(resetComplete);
-    // TODO create fixed-latency path between memReadReqFIFO and memReadRspFIFO
+    // fixed-latency path between memReadReqFIFO and memReadRspFIFO
+    while(!simFinished)
+    {
+        double time_now = sc_time_stamp().to_double();
+        VectorIndex ind = 0;
+
+        if(m_memRespToDispatch.contains(time_now))
+        {
+            ind = m_memRespToDispatch[time_now];
+            // TODO mem r/w consistency issues here?
+            memReadRspFIFO.write(memoryLookup(ind));
+            cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl;
+        }
+
+        wait(1);
+
+        if(memReadReqFIFO.nb_read(ind))
+        {
+            // schedule response after fixed delay
+            double time_disp = (sc_time_stamp() + DRAM_RESP_LATENCY).to_double();
+            m_memRespToDispatch[time_disp] = ind;
+            cout << "Memory request for " << ind << " received at " << sc_time_stamp() << endl;
+        }
+
+    }
+}
+
+
+VectorValue VectorCacheTester::memoryLookup(VectorIndex ind)
+{
+    // TODO return real values here
+    return (VectorValue) ind;
 }

@@ -15,7 +15,6 @@ public:
     {
         SC_METHOD(fifoOutputAdapt);
         sensitive << fifoOutput.data_read() << m_valid;
-        dont_initialize();
     }
 
     void bindSignalInterface(sc_out<bool> & valid, sc_in<bool> & ready, sc_out<T> & data)
@@ -27,7 +26,7 @@ public:
 
     void bindFIFOOutput(sc_fifo_out<T> & fifoOut)
     {
-        fifoOut.bind(fifoOutput);
+        fifoOutput.bind(fifoOut);
     }
 
     void fifoOutputAdapt()

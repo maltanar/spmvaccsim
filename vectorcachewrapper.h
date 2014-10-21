@@ -8,13 +8,18 @@
 
 class VectorCacheWrapper : public sc_module
 {
+    SC_HAS_PROCESS(VectorCacheWrapper);
+
 public:
     VectorCacheWrapper(sc_module_name name);
 
     sc_in_clk clk;
     sc_in<bool> reset;
 
+    sc_event cacheReady;
+
     void printCacheStats();
+    void triggerCacheActive();
 
     // read requests and responses
     sc_fifo_in<VectorIndex> readReq;

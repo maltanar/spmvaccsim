@@ -28,6 +28,12 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
                                               vecCache.io_memResp_bits);
     memoryReadReqAdapter.bindSignalInterface(vecCache.io_memReq_valid, vecCache.io_memReq_ready,
                                             vecCache.io_memReq_bits);
+
+    SC_METHOD(printCacheStats);
+    //sensitive << clk.pos();
+
+    SC_METHOD(triggerCacheActive);
+    sensitive << cacheActive.value_changed_event();
 }
 
 void VectorCacheWrapper::printCacheStats()
@@ -37,4 +43,10 @@ void VectorCacheWrapper::printCacheStats()
     cout << "cache active = " << cacheActive << endl;
     cout << "total reads = " << readCount << endl;
     cout << "total misses = " << missCount << endl;
+}
+
+void VectorCacheWrapper::triggerCacheActive()
+{
+    if(cacheActive)
+        cacheReady.notify();
 }

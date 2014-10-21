@@ -9,8 +9,22 @@
 // needed by DRAMSim
 int SHOW_SIM_OUTPUT=0;
 
+#include "vectorcachetester.h"
+
 int sc_main(int argc, char **argv)
 {
+    VectorCacheTester t("main");
+
+    QList<VectorIndex> accList;
+    accList << 5 << 15 << 7 << 15 << 5;
+
+    t.setAccessList(accList);
+
+    sc_start();
+
+
+    return 0;
+
     QCoreApplication app(argc, argv);
     QCoreApplication::setApplicationName("spmv-ocm-sim");
     QCoreApplication::setApplicationVersion("1.0");
