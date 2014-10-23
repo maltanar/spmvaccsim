@@ -6,7 +6,6 @@
 #include <QMap>
 #include <QList>
 
-#define RDREQ_FIFO_SIZE         16
 #define RDRSP_FIFO_SIZE         16
 #define MEMRDREQ_FIFO_SIZE      2
 #define MEMRDRSP_FIFO_SIZE      2
@@ -27,7 +26,6 @@ public:
 
 protected:
     QList<VectorIndex> m_accessList;
-    VectorIndex m_accessListSize;
 
     VectorCacheWrapper vecCache;
     bool simFinished;
@@ -36,11 +34,15 @@ protected:
     sc_signal<bool> reset;
     sc_event resetComplete;
 
-    sc_fifo<VectorIndex> readReqFIFO, memReadReqFIFO;
+    sc_fifo<VectorIndex> memReadReqFIFO;
     sc_fifo<VectorValue> readRspFIFO, memReadRspFIFO;
 
-    QMap<double, VectorIndex> m_memRespToDispatch;
+    // signals to control read request interface
+    sc_signal<VectorIndex> m_readReqData;
+    sc_signal<bool> m_readReqReady, m_readReqValid;
 
+    // DRAM behavior
+    QMap<double, VectorIndex> m_memRespToDispatch;
     VectorValue memoryLookup(VectorIndex);
 };
 

@@ -3,7 +3,7 @@
 using namespace std;
 
 VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
-    sc_module(name), readReqAdapter("rreqadp"), memoryReadReqAdapter("mrreqadp"),
+    sc_module(name), memoryReadReqAdapter("mrreqadp"),
     memoryReadRespAdapter("mrrespadp"), readRespAdapter("rrespadp"), vecCache("vcache")
 
 {
@@ -15,13 +15,10 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
     vecCache.io_missCount(missCount);
     vecCache.io_readCount(readCount);
     // bind the FIFO interfaces
-    readReqAdapter.bindFIFOInput(readReq);
     readRespAdapter.bindFIFOOutput(readResp);
     memoryReadReqAdapter.bindFIFOOutput(memoryReadReq);
     memoryReadRespAdapter.bindFIFOInput(memoryReadResp);
     // bind the broken-out (ready,valid,data) FIFO interfaces
-    readReqAdapter.bindSignalInterface(vecCache.io_readReq_valid, vecCache.io_readReq_ready,
-                                       vecCache.io_readReq_bits);
     readRespAdapter.bindSignalInterface(vecCache.io_readResp_valid, vecCache.io_readResp_ready,
                                         vecCache.io_readResp_bits);
     memoryReadRespAdapter.bindSignalInterface(vecCache.io_memResp_valid, vecCache.io_memResp_ready,
@@ -38,7 +35,7 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
 
 void VectorCacheWrapper::printCacheStats()
 {
-    cout << "**********************************************************";
+    cout << endl << "**********************************************************" << endl;
     cout << "Statistics at time " << sc_time_stamp() << endl;
     cout << "cache active = " << cacheActive << endl;
     cout << "total reads = " << readCount << endl;
@@ -49,4 +46,12 @@ void VectorCacheWrapper::triggerCacheActive()
 {
     if(cacheActive)
         cacheReady.notify();
+}
+
+void VectorCacheWrapper::connectReadReqSignals(sc_signal<unsigned int> &data, sc_signal<bool> &ready,
+                                               sc_signal<bool> &valid)
+{
+    vecCache.io_readReq_bits(data);
+    vecCache.io_readReq_ready(ready);
+    vecCache.io_readReq_valid(valid);
 }

@@ -4,7 +4,7 @@ using namespace std;
 
 VectorCacheTester::VectorCacheTester(sc_module_name name) :
     sc_module(name), vecCache("vec$"), clkSource("clk", PE_CLOCK_CYCLE),
-    readReqFIFO(RDREQ_FIFO_SIZE), readRspFIFO(RDRSP_FIFO_SIZE),
+    readRspFIFO(RDRSP_FIFO_SIZE),
     memReadReqFIFO(MEMRDREQ_FIFO_SIZE), memReadRspFIFO(MEMRDRSP_FIFO_SIZE)
 {
     simFinished = false;
@@ -14,10 +14,11 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
     vecCache.clk(clk);
     vecCache.reset(reset);
 
-    vecCache.readReq.bind(readReqFIFO);
     vecCache.readResp.bind(readRspFIFO);
     vecCache.memoryReadReq.bind(memReadReqFIFO);
     vecCache.memoryReadResp.bind(memReadRspFIFO);
+
+    vecCache.connectReadReqSignals(m_readReqData, m_readReqReady, m_readReqValid);
 
     reset = true;
 
@@ -30,7 +31,6 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
 void VectorCacheTester::setAccessList(QList<VectorIndex> list)
 {
     m_accessList = list;
-    m_accessListSize = list.size();
 }
 
 void VectorCacheTester::generateReset()
@@ -50,12 +50,37 @@ void VectorCacheTester::pushReadRequests()
     wait(resetComplete);
     wait(vecCache.cacheReady);
 
-    while(!m_accessList.empty())
+    // make copy of m_accessList to avoid overwriting
+    QList<VectorIndex> readReqList = m_accessList;
+
+    while(!readReqList.empty())
     {
+        /*readReqFIFO.write(readReqList.first());
+        cout << "Request to " << readReqList.first() << " written at " << sc_time_stamp() << endl;
+        readReqList.removeFirst();*/
+
+        // make data available if we have some
+        bool canIssueThisCycle = true; // TODO use this for request rate limitation
+
+        if(!readReqList.empty() && canIssueThisCycle)
+        {
+            m_readReqValid = true;
+            m_readReqData = readReqList.first();
+        }
+        else
+        {
+            m_readReqValid = false;
+            m_readReqData = 0xdeadbeef; // use this to detect erronous behavior
+        }
+
         wait(1);
-        readReqFIFO.write(m_accessList.first());
-        cout << "Request to " << m_accessList.first() << " written at " << sc_time_stamp() << endl;
-        m_accessList.removeFirst();
+
+        // pop request if ready asserted
+        if(m_readReqReady)
+        {
+            cout << "Request to " << readReqList.first() << " popped by V$ at " << sc_time_stamp() << endl;
+            readReqList.removeFirst();
+        }
     }
 }
 
@@ -64,14 +89,21 @@ void VectorCacheTester::pullReadResponses()
     wait(resetComplete);
     wait(vecCache.cacheReady);
 
-    unsigned int reqsToPop = m_accessListSize;
+    QList<VectorIndex> reqsToPop = m_accessList;
 
-    while(reqsToPop)
+    while(!reqsToPop.empty())
     {
         wait(1);
-        VectorValue val = readRspFIFO.read();
-        cout << "Response " << val << " at " << sc_time_stamp();
-        reqsToPop--;
+
+        if(readRspFIFO.num_available() > 0)
+        {
+            VectorValue val = readRspFIFO.read();
+            cout << "Response " << val << " at " << sc_time_stamp() << endl;
+            // order checking: responses should be issued in the same order
+            // as the requests
+            sc_assert(val == reqsToPop.first());
+            reqsToPop.removeFirst();
+        }
     }
 
     // responses determine the finish condition

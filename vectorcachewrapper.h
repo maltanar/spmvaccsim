@@ -21,8 +21,9 @@ public:
     void printCacheStats();
     void triggerCacheActive();
 
+    void connectReadReqSignals(sc_signal<VectorIndex> & data, sc_signal<bool> & ready, sc_signal<bool> & valid);
+
     // read requests and responses
-    sc_fifo_in<VectorIndex> readReq;
     sc_fifo_out<VectorValue> readResp;
 
     // memory read requests and responses
@@ -36,7 +37,6 @@ protected:
     sc_signal<quint32> readCount, missCount;
     sc_signal<bool> cacheActive;
     // FIFO adapters
-    FIFOInBreakout<VectorIndex> readReqAdapter;
     FIFOOutBreakout<VectorValue> readRespAdapter;
     FIFOInBreakout<VectorValue> memoryReadRespAdapter;
     FIFOOutBreakout<VectorIndex> memoryReadReqAdapter;
