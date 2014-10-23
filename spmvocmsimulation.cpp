@@ -13,10 +13,6 @@ SpMVOCMSimulation::SpMVOCMSimulation(QString matrixName, int peCount, int maxOut
                                      QList<MemRequestTag> bypass) :
     sc_module(sc_module_name("top"))
 {
-    // tone down the SystemC verbosity
-    sc_report_handler::set_actions (SC_WARNING, SC_DO_NOTHING);
-    sc_report_handler::set_actions (SC_INFO, SC_DO_NOTHING);
-
     m_reqFIFOSize = 32;
     m_totalCycles = 0;
 
