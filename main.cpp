@@ -67,6 +67,7 @@ int sc_main(int argc, char **argv)
     VectorCacheTester tester("main");
 
     tester.setAccessList(rowInds);
+    tester.initializeMemory(op->rowCount(), 0);
 
     sc_start();
 

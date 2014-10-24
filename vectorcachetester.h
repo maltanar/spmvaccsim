@@ -17,8 +17,10 @@ class VectorCacheTester : public sc_module
     SC_HAS_PROCESS(VectorCacheTester);
 public:
     VectorCacheTester(sc_module_name name);
+    ~VectorCacheTester();
 
     void setAccessList(QList<VectorIndex> list);
+    void initializeMemory(unsigned int numElements, VectorValue initValue);
 
     void generateReset();
     void pushReadRequests();
@@ -27,6 +29,7 @@ public:
 
 protected:
     QList<VectorIndex> m_accessList;
+    VectorValue * m_mainMemory;
 
     VectorCacheWrapper vecCache;
     bool simFinished;
@@ -47,7 +50,9 @@ protected:
 
     // DRAM behavior
     QMap<double, VectorIndex> m_memRespToDispatch;
-    VectorValue memoryLookup(VectorIndex);
+    unsigned int m_allocatedMemorySize;
+    VectorValue memoryRead(VectorIndex addr);
+    void memoryWrite(VectorIndex addr, VectorValue data);
 };
 
 #endif // VECTORCACHETESTER_H

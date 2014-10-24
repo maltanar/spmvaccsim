@@ -9,6 +9,7 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
     writeReqFIFO(WRITE_FIFO_SIZE), memWriteReqFIFO(WRITE_FIFO_SIZE)
 {
     simFinished = false;
+    m_mainMemory = NULL;
 
     clk(clkSource);
 
@@ -35,9 +36,23 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
     SC_CTHREAD(handleDRAM, clk.pos());
 }
 
+VectorCacheTester::~VectorCacheTester()
+{
+    delete m_mainMemory;
+}
+
 void VectorCacheTester::setAccessList(QList<VectorIndex> list)
 {
     m_accessList = list;
+}
+
+void VectorCacheTester::initializeMemory(unsigned int numElements, VectorValue initValue)
+{
+    m_allocatedMemorySize = numElements;
+    m_mainMemory = new VectorValue[numElements];
+
+    for(unsigned int i = 0; i < numElements; i++)
+        m_mainMemory[i] = initValue;
 }
 
 void VectorCacheTester::generateReset()
@@ -135,7 +150,7 @@ void VectorCacheTester::handleDRAM()
         {
             ind = m_memRespToDispatch[time_now];
             // TODO mem r/w consistency issues here?
-            memReadRspFIFO.write(memoryLookup(ind));
+            memReadRspFIFO.write(memoryRead(ind));
             // DEBUG cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl;
         }
 
@@ -148,13 +163,17 @@ void VectorCacheTester::handleDRAM()
             m_memRespToDispatch[time_disp] = ind;
             // DEBUG cout << "Memory request for " << ind << " received at " << sc_time_stamp() << endl;
         }
-
     }
 }
 
 
-VectorValue VectorCacheTester::memoryLookup(VectorIndex ind)
+VectorValue VectorCacheTester::memoryRead(VectorIndex addr)
 {
-    // TODO return real values here
-    return (VectorValue) ind;
+    return m_mainMemory[addr];
+}
+
+void VectorCacheTester::memoryWrite(VectorIndex addr, VectorValue data)
+{
+    sc_assert(addr < m_allocatedMemorySize);
+    m_mainMemory[addr] = data;
 }
