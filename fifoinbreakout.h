@@ -34,6 +34,9 @@ public:
     {
         m_valid = (fifoInput.num_available() > 0);
 
+        // TODO this will not work properly if e.g ready always follows
+        // valid in a combinatorial way
+
         if(fifoInput.num_available() > 0 && m_ready)
         {
             T data = (T) 0;
