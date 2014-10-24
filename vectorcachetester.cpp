@@ -49,7 +49,7 @@ void VectorCacheTester::generateReset()
     reset = false;
     // notify other threads so they can start
     resetComplete.notify();
-    cout << "Reset completed at " << sc_time_stamp() << endl;
+    // DEBUG cout << "Reset completed at " << sc_time_stamp() << endl;
 }
 
 void VectorCacheTester::pushReadRequests()
@@ -63,7 +63,7 @@ void VectorCacheTester::pushReadRequests()
     while(!readReqList.empty())
     {
         /*readReqFIFO.write(readReqList.first());
-        cout << "Request to " << readReqList.first() << " written at " << sc_time_stamp() << endl;
+        // DEBUG cout << "Request to " << readReqList.first() << " written at " << sc_time_stamp() << endl;
         readReqList.removeFirst();*/
 
         // make data available if we have some
@@ -85,7 +85,7 @@ void VectorCacheTester::pushReadRequests()
         // pop request if ready asserted
         if(m_readReqReady)
         {
-            cout << "Request to " << readReqList.first() << " popped by V$ at " << sc_time_stamp() << endl;
+            // DEBUG cout << "Request to " << readReqList.first() << " popped by V$ at " << sc_time_stamp() << endl;
             readReqList.removeFirst();
         }
     }
@@ -105,7 +105,7 @@ void VectorCacheTester::pullReadResponses()
         if(readRspFIFO.num_available() > 0)
         {
             VectorValue val = readRspFIFO.read();
-            cout << "Response " << val << " at " << sc_time_stamp() << endl;
+            // DEBUG cout << "Response " << val << " at " << sc_time_stamp() << endl;
             // order checking: responses should be issued in the same order
             // as the requests
             sc_assert(val == reqsToPop.first());
@@ -136,7 +136,7 @@ void VectorCacheTester::handleDRAM()
             ind = m_memRespToDispatch[time_now];
             // TODO mem r/w consistency issues here?
             memReadRspFIFO.write(memoryLookup(ind));
-            cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl;
+            // DEBUG cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl;
         }
 
         wait(1);
@@ -146,7 +146,7 @@ void VectorCacheTester::handleDRAM()
             // schedule response after fixed delay
             double time_disp = (sc_time_stamp() + DRAM_RESP_LATENCY).to_double();
             m_memRespToDispatch[time_disp] = ind;
-            cout << "Memory request for " << ind << " received at " << sc_time_stamp() << endl;
+            // DEBUG cout << "Memory request for " << ind << " received at " << sc_time_stamp() << endl;
         }
 
     }
