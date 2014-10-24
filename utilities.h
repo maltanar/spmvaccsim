@@ -9,6 +9,8 @@
 typedef     unsigned int        VectorIndex;
 typedef     long unsigned int   VectorValue;
 
+#define     BUBBLE_INDEX        (0xFFFFFFFF)
+
 #define     PE_CLOCK_CYCLE      (sc_time(10, SC_NS) / ((float)(GlobalConfig::getInstance().getPEFreqMHz()) / 100.0   ) )
 #define     MEMC_CLOCK_CYCLE    (sc_time(3, SC_NS) / ((float)(GlobalConfig::getInstance().getMemIOClkFreqMHz()) / 333.0   ) )
 #define     PE_TICKS_PER_SECOND (uint64_t)(sc_time(1000, SC_MS)/PE_CLOCK_CYCLE)
@@ -73,6 +75,9 @@ class GlobalConfig
         static void setPEFreqMHz(int f);
         static int getPEFreqMHz();
 
+        static void setHazardWindowSize(int w);
+        static int getHazardWindowSize();
+
         static void setMemorySizeMB(int memSize);
         static int getMemorySizeMB();
 
@@ -101,6 +106,7 @@ class GlobalConfig
 
         static int m_peFreq;
         static int m_memorySizeMB;
+        static int m_hazardWindowSize;
 
         static QString m_dramChipType;
         static QMap<QString, DRAMChipInfo> m_chipInfo;

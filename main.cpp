@@ -28,16 +28,20 @@ int sc_main(int argc, char **argv)
 
     QCommandLineOption spmOption("m", "Sparse matrix to process", "spm");
     QCommandLineOption peClockFreqOption("f", "PE clock frequency (MHz)", "pefreq", "100");
-
+    QCommandLineOption hazardWindowSizeOption("w", "RAW hazard window size", "hraw", "10");
 
     parser.addOption(spmOption);
+    parser.addOption(hazardWindowSizeOption);
     parser.addOption(peClockFreqOption);
+
 
     parser.process(app);
 
     QString spm = parser.value(spmOption);
     int peFreq = parser.value(peClockFreqOption).toInt();
+    int hazardWindowSize = parser.value(hazardWindowSizeOption).toInt();
     GlobalConfig::getInstance().setPEFreqMHz(peFreq);
+    GlobalConfig::getInstance().setHazardWindowSize(hazardWindowSize);
 
 
     if(spm.isEmpty() || !QFile::exists(getMatrixFilename(spm)))
@@ -62,7 +66,6 @@ int sc_main(int argc, char **argv)
     VectorIndex startCol;
     quint64 startNZ;
     op->assignWorkToWorker(0, 1, startCol, startNZ, rowInds, colLens);
-
 
     VectorCacheTester tester("main");
 

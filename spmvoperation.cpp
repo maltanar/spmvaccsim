@@ -90,3 +90,61 @@ QList<quint32> SpMVOperation::getRowLengths(quint32 peID, quint32 peCount)
 
     return rowLengths;
 }
+
+void SpMVOperation::shiftActiveWindowAndInsert(VectorIndex * window, VectorIndex newElement, int windowSize)
+{
+    for(int i = 0; i < windowSize - 1; i++)
+    {
+        window[i + 1] = window[i];
+    }
+
+    window[0] = newElement;
+}
+
+bool SpMVOperation::windowContains(VectorIndex * window, VectorIndex element, int windowSize)
+{
+    for(int i = 0; i < windowSize; i++)
+    {
+        if(window[i] == element)
+            return true;
+    }
+
+    return false;
+}
+
+QList<VectorIndex> SpMVOperation::insertHazardAvoidanceBubbles(QList<VectorIndex> accessStream, int minSameElementSpacing)
+{
+    // if window size is zero, no change
+    if(minSameElementSpacing == 0)
+        return accessStream;
+
+    VectorIndex * activeWindow = new VectorIndex[minSameElementSpacing];
+
+    // fill active window with bubbles
+    for(int i = 0; i < minSameElementSpacing; i++)
+        activeWindow[i] = BUBBLE_INDEX;
+
+    QList<VectorIndex> elementsLeft = accessStream;
+    QList<VectorIndex> newAccessStream;
+
+    while(!elementsLeft.empty())
+    {
+        VectorIndex current = elementsLeft.takeFirst();
+        // wait until hazard has passed, if any
+        while(windowContains(activeWindow, current, minSameElementSpacing))
+        {
+            shiftActiveWindowAndInsert(activeWindow, BUBBLE_INDEX, minSameElementSpacing);
+            newAccessStream.push_back(BUBBLE_INDEX);
+        }
+        // insert current element
+        shiftActiveWindowAndInsert(activeWindow, current, minSameElementSpacing);
+        newAccessStream.push_back(current);
+    }
+
+    delete activeWindow;
+
+    cout << "Original access stream length: " << accessStream.size() << ", hazard-free access stream length: " << newAccessStream.size() << endl;
+    cout << "Inserted " << newAccessStream.size() - accessStream.size() << " bubbles" << endl;
+
+    return newAccessStream;
+}

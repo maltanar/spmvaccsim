@@ -1,7 +1,7 @@
 #include "utilities.h"
 
 // allocate space for global static variables from singleton
-int GlobalConfig::m_peFreq;
+int GlobalConfig::m_peFreq, GlobalConfig::m_hazardWindowSize;
 QString GlobalConfig::m_dramChipType;
 QMap<QString, DRAMChipInfo> GlobalConfig::m_chipInfo;
 int GlobalConfig::m_memorySizeMB;
@@ -82,6 +82,16 @@ QMap<QString, QString> getDefaultDRAMSimConfig()
 void GlobalConfig::setPEFreqMHz(int f) {m_peFreq = f;}
 
 int GlobalConfig::getPEFreqMHz() {return m_peFreq;}
+
+void GlobalConfig::setHazardWindowSize(int w)
+{
+    m_hazardWindowSize = w;
+}
+
+int GlobalConfig::getHazardWindowSize()
+{
+    return m_hazardWindowSize;
+}
 
 void GlobalConfig::setMemorySizeMB(int memSize)
 {

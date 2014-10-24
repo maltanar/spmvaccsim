@@ -21,6 +21,8 @@ public:
     void assignWorkToWorker(quint32 peID, quint32 peCount, VectorIndex & startingRow, quint64 & startingNZ,
                             QList<VectorIndex> & dvAccessPattern, QList<VectorIndex> & rowLengths);
 
+    static QList<VectorIndex> insertHazardAvoidanceBubbles(QList<VectorIndex> accessStream, int minSameElementSpacing);
+
     QList<VectorIndex> getDVAccessPattern(quint32 peID, quint32 peCount);
     QList<quint32> getRowLengths(quint32 peID, quint32 peCount);
 
@@ -31,6 +33,8 @@ protected:
     quint32 * m_colIndices;
     quint32 * m_rowPointers;
 
+    static void shiftActiveWindowAndInsert(VectorIndex * window, VectorIndex newElement, int windowSize);
+    static bool windowContains(VectorIndex * window, VectorIndex element, int windowSize);
 };
 
 #endif // SPMVOPERATION_H

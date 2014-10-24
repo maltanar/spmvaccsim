@@ -1,4 +1,5 @@
 #include "vectorcachetester.h"
+#include "spmvoperation.h"
 
 using namespace std;
 
@@ -74,7 +75,8 @@ void VectorCacheTester::pushReadRequests()
     wait(vecCache.cacheReady);
 
     // make copy of m_accessList to avoid overwriting
-    QList<VectorIndex> readReqList = m_accessList;
+    // call function to create a new list without RAW hazards
+    QList<VectorIndex> readReqList = SpMVOperation::insertHazardAvoidanceBubbles(m_accessList, GlobalConfig::getHazardWindowSize());
 
     while(!readReqList.empty())
     {
@@ -85,13 +87,24 @@ void VectorCacheTester::pushReadRequests()
         // make data available if we have some
         bool canIssueThisCycle = true; // TODO use this for request rate limitation
 
-        if(!readReqList.empty() && canIssueThisCycle)
+
+        if(readReqList.first() == BUBBLE_INDEX)
         {
+            // do not generate valid for bubble indices
+            m_readReqValid = false;
+            m_readReqData = 0xdeadbeef; // use this to detect erronous behavior
+            // remove bubble from request list
+            readReqList.removeFirst();
+        }
+        else if(!readReqList.empty() && canIssueThisCycle)
+        {
+            // issue request
             m_readReqValid = true;
             m_readReqData = readReqList.first();
         }
         else
         {
+            // no data to issue this cycle
             m_readReqValid = false;
             m_readReqData = 0xdeadbeef; // use this to detect erronous behavior
         }
@@ -99,7 +112,7 @@ void VectorCacheTester::pushReadRequests()
         wait(1);
 
         // pop request if ready asserted
-        if(m_readReqReady)
+        if(m_readReqReady && !readReqList.empty())
         {
             // DEBUG cout << "Request to " << readReqList.first() << " popped by V$ at " << sc_time_stamp() << endl;
             readReqList.removeFirst();
