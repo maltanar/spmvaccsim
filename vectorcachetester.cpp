@@ -34,8 +34,10 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
 
     SC_CTHREAD(generateReset, clk.pos());
     SC_CTHREAD(pushReadRequests, clk.pos());
-    SC_CTHREAD(pullReadResponses, clk.pos());
-    SC_CTHREAD(handleDRAM, clk.pos());
+    //SC_CTHREAD(pullReadResponses, clk.pos());
+    SC_CTHREAD(handleDRAMReads, clk.pos());
+    SC_CTHREAD(handleDRAMWrites, clk.pos());
+    SC_CTHREAD(handleDatapath, clk.pos());
 }
 
 VectorCacheTester::~VectorCacheTester()
@@ -66,7 +68,7 @@ void VectorCacheTester::generateReset()
     reset = false;
     // notify other threads so they can start
     resetComplete.notify();
-    // DEBUG cout << "Reset completed at " << sc_time_stamp() << endl;
+    cout << "Reset completed at " << sc_time_stamp() << endl;
 }
 
 void VectorCacheTester::pushReadRequests()
@@ -81,7 +83,7 @@ void VectorCacheTester::pushReadRequests()
     while(!readReqList.empty())
     {
         /*readReqFIFO.write(readReqList.first());
-        // DEBUG cout << "Request to " << readReqList.first() << " written at " << sc_time_stamp() << endl;
+        cout << "Request to " << readReqList.first() << " written at " << sc_time_stamp() << endl;
         readReqList.removeFirst();*/
 
         // make data available if we have some
@@ -114,10 +116,13 @@ void VectorCacheTester::pushReadRequests()
         // pop request if ready asserted
         if(m_readReqReady && !readReqList.empty())
         {
-            // DEBUG cout << "Request to " << readReqList.first() << " popped by V$ at " << sc_time_stamp() << endl;
+            cout << "Request to " << readReqList.first() << " popped by V$ at " << sc_time_stamp() << endl;
             readReqList.removeFirst();
         }
     }
+
+    m_readReqValid = false;
+    m_readReqData = 0xdeadbeef;
 }
 
 void VectorCacheTester::pullReadResponses()
@@ -134,7 +139,7 @@ void VectorCacheTester::pullReadResponses()
         if(readRspFIFO.num_available() > 0)
         {
             VectorValue val = readRspFIFO.read();
-            // DEBUG cout << "Response " << val << " at " << sc_time_stamp() << endl;
+            cout << "Response " << val << " at " << sc_time_stamp() << endl;
             // order checking: responses should be issued in the same order
             // as the requests
             sc_assert(val == memoryRead(reqsToPop.first()));
@@ -152,7 +157,7 @@ void VectorCacheTester::pullReadResponses()
     sc_stop();
 }
 
-void VectorCacheTester::handleDRAM()
+void VectorCacheTester::handleDRAMReads()
 {
     wait(resetComplete);
     // fixed-latency path between memReadReqFIFO and memReadRspFIFO
@@ -166,7 +171,7 @@ void VectorCacheTester::handleDRAM()
             ind = m_memRespToDispatch[time_now];
             // TODO mem r/w consistency issues here?
             memReadRspFIFO.write(memoryRead(ind));
-            // DEBUG cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl;
+            cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl;
         }
 
         wait(1);
@@ -176,7 +181,72 @@ void VectorCacheTester::handleDRAM()
             // schedule response after fixed delay
             double time_disp = (sc_time_stamp() + DRAM_RESP_LATENCY).to_double();
             m_memRespToDispatch[time_disp] = ind;
-            // DEBUG cout << "Memory request for " << ind << " received at " << sc_time_stamp() << endl;
+            cout << "Memory request for " << ind << " received at " << sc_time_stamp() << endl;
+        }
+    }
+}
+
+void VectorCacheTester::handleDRAMWrites()
+{
+    wait(resetComplete);
+
+    QList<VectorIndex> reqsToPop = m_accessList;
+
+    while(!reqsToPop.empty())
+    {
+        VectorIndex ind = 0;
+
+        if(memWriteReqFIFO.nb_read(ind))
+        {
+            // check that write requests appear in correct order
+            sc_assert(ind == reqsToPop.first());
+            cout << "Memory write to " << ind << " data " << writeDataOut << " at " << sc_time_stamp() << endl;
+            memoryWrite(ind, writeDataOut);
+            reqsToPop.removeFirst();
+        }
+
+        wait(1);
+    }
+
+    // responses determine the finish condition
+    simFinished = true;
+
+    // print final cache stats
+    vecCache.printCacheStats();
+
+    // stop the simulation
+    sc_stop();
+}
+
+void VectorCacheTester::handleDatapath()
+{
+    // fixed-latency path between readRespFIFO and writeReqFIFO
+    while(!simFinished)
+    {
+        double time_now = sc_time_stamp().to_double();
+        VectorIndex ind = 0;
+        VectorValue val = 0;
+
+        if(m_writeReqToDispatch.contains(time_now))
+        {
+            ind = m_writeReqToDispatch[time_now];
+            val = m_writeDataToDispatch.takeFirst();
+
+            writeReqFIFO.write(ind);
+            writeDataOut = val;
+            cout << "Write request to " << ind << " value " << val << " written at " << sc_time_stamp() << endl;
+        }
+
+        wait(1);
+
+        if(readRspFIFO.nb_read(val))
+        {
+            // schedule response after fixed delay
+            double time_disp = (sc_time_stamp() + DATAPATH_LATENCY).to_double();
+            m_writeReqToDispatch[time_disp] = readRspInd;
+            // our datapath just performs the operation val = val + 1
+            m_writeDataToDispatch.push_back(val + 1);
+            cout << "Read response for " << readRspInd << " value " << val << " received at " << sc_time_stamp() << endl;
         }
     }
 }

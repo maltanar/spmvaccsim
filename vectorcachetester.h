@@ -11,6 +11,8 @@
 #define MEMRDRSP_FIFO_SIZE      2
 #define WRITE_FIFO_SIZE         16
 #define DRAM_RESP_LATENCY       (10 * PE_CLOCK_CYCLE)
+#define DATAPATH_LATENCY        (GlobalConfig::getHazardWindowSize() * PE_CLOCK_CYCLE)
+
 
 class VectorCacheTester : public sc_module
 {
@@ -25,7 +27,9 @@ public:
     void generateReset();
     void pushReadRequests();
     void pullReadResponses();
-    void handleDRAM();
+    void handleDRAMReads();
+    void handleDRAMWrites();
+    void handleDatapath();
 
 protected:
     QList<VectorIndex> m_accessList;
@@ -54,6 +58,10 @@ protected:
     unsigned int m_allocatedMemorySize;
     VectorValue memoryRead(VectorIndex addr);
     void memoryWrite(VectorIndex addr, VectorValue data);
+
+    // datapath behavior
+    QMap<double, VectorIndex> m_writeReqToDispatch;
+    QList<VectorValue> m_writeDataToDispatch;
 };
 
 #endif // VECTORCACHETESTER_H
