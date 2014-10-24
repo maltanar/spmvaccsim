@@ -17,6 +17,7 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
     vecCache.reset(reset);
 
     vecCache.readResp.bind(readRspFIFO);
+    vecCache.readRespInd.bind(readRspInd);
     vecCache.memoryReadReq.bind(memReadReqFIFO);
     vecCache.memoryReadResp.bind(memReadRspFIFO);
 
@@ -124,6 +125,7 @@ void VectorCacheTester::pullReadResponses()
             // order checking: responses should be issued in the same order
             // as the requests
             sc_assert(val == memoryRead(reqsToPop.first()));
+            sc_assert(readRspInd == reqsToPop.first());
             reqsToPop.removeFirst();
         }
     }

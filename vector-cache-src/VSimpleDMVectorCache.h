@@ -40,6 +40,7 @@ SC_MODULE(VSimpleDMVectorCache) {
     sc_out<bool>	io_memWriteReq_valid;
     sc_out<bool>	io_cacheActive;
     sc_in<uint32_t>	io_readReq_bits;
+    sc_out<uint32_t>	io_readRespInd;
     sc_in<uint32_t>	io_writeReq_bits;
     sc_out<uint32_t>	io_memReq_bits;
     sc_out<uint32_t>	io_memWriteReq_bits;
@@ -65,11 +66,9 @@ SC_MODULE(VSimpleDMVectorCache) {
     VL_SIG16(v__DOT__currentReqEntry,11,0);
     VL_SIG16(v__DOT__initCtr,12,0);
     VL_SIG16(v__DOT__currentWriteReqEntry,11,0);
-    VL_SIG16(v__DOT__bramReadAddrReg,12,0);
-    //char	__VpadToAlign122[2];
     VL_SIG(v__DOT__missCount,31,0);
     VL_SIG(v__DOT__readCount,31,0);
-    //char	__VpadToAlign132[4];
+    VL_SIG(v__DOT__requestReg,23,0);
     VL_SIG64(v__DOT__T42,63,0);
     VL_SIG16(v__DOT__tagStorage[8192],11,0);
     VL_SIG64(v__DOT__cacheLines[8192],63,0);

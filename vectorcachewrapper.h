@@ -30,6 +30,7 @@ public:
 
     // read responses
     sc_fifo_out<VectorValue> readResp;
+    sc_out<VectorIndex> readRespInd;
 
     // memory read requests and responses
     sc_fifo_out<VectorIndex> memoryReadReq;

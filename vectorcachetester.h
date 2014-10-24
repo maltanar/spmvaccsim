@@ -40,6 +40,7 @@ protected:
 
     sc_fifo<VectorIndex> memReadReqFIFO;
     sc_fifo<VectorValue> readRspFIFO, memReadRspFIFO;
+    sc_signal<VectorIndex> readRspInd;
 
     sc_fifo<VectorIndex> writeReqFIFO, memWriteReqFIFO;
     sc_signal<VectorValue> writeDataOut, memWriteDataOut;

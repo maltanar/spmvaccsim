@@ -16,8 +16,9 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
     vecCache.io_missCount(missCount);
     vecCache.io_readCount(readCount);
     // bind the FIFO interfaces
-    // processor read port
+    // processor read response port
     readRespAdapter.bindFIFOOutput(readResp);
+    vecCache.io_readRespInd(readRespInd);
     // memory read port
     memoryReadReqAdapter.bindFIFOOutput(memoryReadReq);
     memoryReadRespAdapter.bindFIFOInput(memoryReadResp);
