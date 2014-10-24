@@ -22,13 +22,22 @@ public:
     void triggerCacheActive();
 
     void connectReadReqSignals(sc_signal<VectorIndex> & data, sc_signal<bool> & ready, sc_signal<bool> & valid);
+    //void connectWriteReqSignals(sc_signal<VectorIndex> & addr, sc_signal<VectorValue> & data, sc_signal<bool> & ready, sc_signal<bool> & valid);
 
-    // read requests and responses
+    // write requests (addr) and data
+    sc_fifo_in<VectorIndex> writeReq;
+    sc_in<VectorValue> writeData;
+
+    // read responses
     sc_fifo_out<VectorValue> readResp;
 
     // memory read requests and responses
     sc_fifo_out<VectorIndex> memoryReadReq;
     sc_fifo_in<VectorValue> memoryReadResp;
+
+    // memory write requests (addr) and data
+    sc_fifo_out<VectorIndex> memoryWriteReq;
+    sc_out<VectorValue> memoryWriteData;
 
 protected:
     // wrapped vector cache instance
@@ -36,10 +45,15 @@ protected:
     // signals to monitor cache statistics
     sc_signal<quint32> readCount, missCount;
     sc_signal<bool> cacheActive;
+
     // FIFO adapters
     FIFOOutBreakout<VectorValue> readRespAdapter;
+
     FIFOInBreakout<VectorValue> memoryReadRespAdapter;
     FIFOOutBreakout<VectorIndex> memoryReadReqAdapter;
+
+    FIFOInBreakout<VectorIndex> writeReqAdapter;
+    FIFOOutBreakout<VectorIndex> memoryWriteReqAdapter;
 
 
 };

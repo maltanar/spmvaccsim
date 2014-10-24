@@ -5,7 +5,8 @@ using namespace std;
 VectorCacheTester::VectorCacheTester(sc_module_name name) :
     sc_module(name), vecCache("vec$"), clkSource("clk", PE_CLOCK_CYCLE),
     readRspFIFO(RDRSP_FIFO_SIZE),
-    memReadReqFIFO(MEMRDREQ_FIFO_SIZE), memReadRspFIFO(MEMRDRSP_FIFO_SIZE)
+    memReadReqFIFO(MEMRDREQ_FIFO_SIZE), memReadRspFIFO(MEMRDRSP_FIFO_SIZE),
+    writeReqFIFO(WRITE_FIFO_SIZE), memWriteReqFIFO(WRITE_FIFO_SIZE)
 {
     simFinished = false;
 
@@ -17,6 +18,12 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
     vecCache.readResp.bind(readRspFIFO);
     vecCache.memoryReadReq.bind(memReadReqFIFO);
     vecCache.memoryReadResp.bind(memReadRspFIFO);
+
+    vecCache.writeData.bind(writeDataOut);
+    vecCache.writeReq.bind(writeReqFIFO);
+
+    vecCache.memoryWriteData.bind(memWriteDataOut);
+    vecCache.memoryWriteReq.bind(memWriteReqFIFO);
 
     vecCache.connectReadReqSignals(m_readReqData, m_readReqReady, m_readReqValid);
 

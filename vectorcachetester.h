@@ -9,6 +9,7 @@
 #define RDRSP_FIFO_SIZE         16
 #define MEMRDREQ_FIFO_SIZE      2
 #define MEMRDRSP_FIFO_SIZE      2
+#define WRITE_FIFO_SIZE         16
 #define DRAM_RESP_LATENCY       (10 * PE_CLOCK_CYCLE)
 
 class VectorCacheTester : public sc_module
@@ -36,6 +37,9 @@ protected:
 
     sc_fifo<VectorIndex> memReadReqFIFO;
     sc_fifo<VectorValue> readRspFIFO, memReadRspFIFO;
+
+    sc_fifo<VectorIndex> writeReqFIFO, memWriteReqFIFO;
+    sc_signal<VectorValue> writeDataOut, memWriteDataOut;
 
     // signals to control read request interface
     sc_signal<VectorIndex> m_readReqData;
