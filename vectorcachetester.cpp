@@ -123,7 +123,7 @@ void VectorCacheTester::pullReadResponses()
             // DEBUG cout << "Response " << val << " at " << sc_time_stamp() << endl;
             // order checking: responses should be issued in the same order
             // as the requests
-            sc_assert(val == reqsToPop.first());
+            sc_assert(val == memoryRead(reqsToPop.first()));
             reqsToPop.removeFirst();
         }
     }
@@ -169,6 +169,7 @@ void VectorCacheTester::handleDRAM()
 
 VectorValue VectorCacheTester::memoryRead(VectorIndex addr)
 {
+    sc_assert(addr < m_allocatedMemorySize);
     return m_mainMemory[addr];
 }
 

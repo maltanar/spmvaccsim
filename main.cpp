@@ -62,12 +62,14 @@ int sc_main(int argc, char **argv)
     VectorIndex startCol;
     quint64 startNZ;
     op->assignWorkToWorker(0, 1, startCol, startNZ, rowInds, colLens);
-    delete op;
+
 
     VectorCacheTester tester("main");
 
     tester.setAccessList(rowInds);
     tester.initializeMemory(op->rowCount(), 0);
+
+    delete op;
 
     sc_start();
 
