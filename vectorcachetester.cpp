@@ -169,6 +169,7 @@ void VectorCacheTester::handleDRAMReads()
         if(m_memRespToDispatch.contains(time_now))
         {
             ind = m_memRespToDispatch[time_now];
+            m_memRespToDispatch.remove(time_now);
             // TODO mem r/w consistency issues here?
             memReadRspFIFO.write(memoryRead(ind));
             cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl;
@@ -190,38 +191,26 @@ void VectorCacheTester::handleDRAMWrites()
 {
     wait(resetComplete);
 
-    QList<VectorIndex> reqsToPop = m_accessList;
-
-    while(!reqsToPop.empty())
+    while(!simFinished)
     {
         VectorIndex ind = 0;
 
         if(memWriteReqFIFO.nb_read(ind))
         {
-            // check that write requests appear in correct order
-            sc_assert(ind == reqsToPop.first());
             cout << "Memory write to " << ind << " data " << writeDataOut << " at " << sc_time_stamp() << endl;
             memoryWrite(ind, writeDataOut);
-            reqsToPop.removeFirst();
         }
 
         wait(1);
     }
-
-    // responses determine the finish condition
-    simFinished = true;
-
-    // print final cache stats
-    vecCache.printCacheStats();
-
-    // stop the simulation
-    sc_stop();
 }
 
 void VectorCacheTester::handleDatapath()
 {
+    QList<VectorIndex> reqsToPop = m_accessList;
+
     // fixed-latency path between readRespFIFO and writeReqFIFO
-    while(!simFinished)
+    while(!reqsToPop.empty() || !m_writeDataToDispatch.empty())
     {
         double time_now = sc_time_stamp().to_double();
         VectorIndex ind = 0;
@@ -230,6 +219,7 @@ void VectorCacheTester::handleDatapath()
         if(m_writeReqToDispatch.contains(time_now))
         {
             ind = m_writeReqToDispatch[time_now];
+            m_writeReqToDispatch.remove(time_now);
             val = m_writeDataToDispatch.takeFirst();
 
             writeReqFIFO.write(ind);
@@ -247,8 +237,26 @@ void VectorCacheTester::handleDatapath()
             // our datapath just performs the operation val = val + 1
             m_writeDataToDispatch.push_back(val + 1);
             cout << "Read response for " << readRspInd << " value " << val << " received at " << sc_time_stamp() << endl;
+            // check that read responses / write requests appear in correct order
+            sc_assert(readRspInd == reqsToPop.first());
+            reqsToPop.removeFirst();
         }
     }
+
+    // cache writes determine the finish condition
+    // wait until all writes have completed (i.e all write FIFOs empty)
+    while(writeReqFIFO.num_available() > 0 && memWriteReqFIFO.num_available() > 0)
+        wait(1);
+
+    wait(10);
+
+    simFinished = true;
+
+    // print final cache stats
+    vecCache.printCacheStats();
+
+    // stop the simulation
+    sc_stop();
 }
 
 
