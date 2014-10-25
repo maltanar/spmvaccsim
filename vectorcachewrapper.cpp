@@ -46,6 +46,10 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
                                               vecCache.io_memWriteReq_bits);
     vecCache.io_memWriteData(memoryWriteData);
 
+    // clock for input FIFO adapters
+    memoryReadRespAdapter.clk(clk);
+    writeReqAdapter.clk(clk);
+
     SC_METHOD(printCacheStats);
     //sensitive << clk.pos();
 
@@ -55,6 +59,17 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
 
 void VectorCacheWrapper::printCacheStats()
 {
+    /* little hack for per-cycle monitoring without spewing
+     * too much data
+
+    static bool cacheActiveFlag = false;
+    if(cacheActive)
+        cacheActiveFlag=true;
+
+    if(!cacheActiveFlag)
+        return;
+    */
+
     cout << endl << "**********************************************************" << endl;
     cout << "Statistics at time " << sc_time_stamp() << endl;
     cout << "cache active = " << cacheActive << endl;

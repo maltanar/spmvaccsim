@@ -11,11 +11,11 @@ class FIFOInBreakout : public sc_module
 public:
     sc_fifo_in<T> fifoInput;
 
+    sc_in_clk clk;
+
     FIFOInBreakout(sc_module_name nm) : sc_module(nm)
     {
-        SC_METHOD(fifoInputAdapt);
-        sensitive << fifoInput.data_written() << m_ready;
-        dont_initialize();
+        SC_CTHREAD(updateValid, clk.pos());
     }
 
     void bindSignalInterface(sc_in<bool> & valid, sc_out<bool> & ready, sc_in<T> & data)
@@ -30,23 +30,30 @@ public:
         fifoInput.bind(fifoIn);
     }
 
-    void fifoInputAdapt()
+    void updateValid()
     {
-        m_valid = (fifoInput.num_available() > 0);
-
-        // TODO this will not work properly if e.g ready always follows
-        // valid in a combinatorial way
-
-        if(fifoInput.num_available() > 0 && m_ready)
+        T data = (T) 0;
+        while(1)
         {
-            T data = (T) 0;
-            sc_assert(fifoInput.nb_read(data));
-            m_data = data;
+            // if data is available in the FIFO, expose it
+            m_valid = (fifoInput.num_available() > 0);
 
+            if(fifoInput.nb_read(data))
+            {
+                m_data = data;
+            }
+
+            // wait for at least 1 clock cycle
+            wait(1);
+
+            // if we already put some data there,
+            // wait until ready before popping new data from FIFO
+            if(m_valid)
+                while(!m_ready)
+                    wait(1);
         }
-        else
-            m_data = (T) 0;
     }
+
 
 protected:
     sc_signal<bool> m_valid;
