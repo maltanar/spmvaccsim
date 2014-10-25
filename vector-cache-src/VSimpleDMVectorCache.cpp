@@ -23,7 +23,8 @@ VL_SC_CTOR_IMP(VSimpleDMVectorCache)
       io_cacheActive("io_cacheActive"), io_readReq_bits("io_readReq_bits"), 
       io_readRespInd("io_readRespInd"), io_writeReq_bits("io_writeReq_bits"), 
       io_memReq_bits("io_memReq_bits"), io_memWriteReq_bits("io_memWriteReq_bits"), 
-      io_readCount("io_readCount"), io_missCount("io_missCount"), 
+      io_readCount("io_readCount"), io_readMissCount("io_readMissCount"), 
+      io_writeCount("io_writeCount"), io_writeMissCount("io_writeMissCount"), 
       io_readResp_bits("io_readResp_bits"), io_writeData("io_writeData"), 
       io_memResp_bits("io_memResp_bits"), io_memWriteData("io_memWriteData")
 #endif
@@ -60,25 +61,29 @@ VL_SC_CTOR_IMP(VSimpleDMVectorCache)
     __Vcellinp__v__io_readReq_valid = VL_RAND_RESET_I(1);
     __Vcellinp__v__reset = VL_RAND_RESET_I(1);
     __Vcellinp__v__clk = VL_RAND_RESET_I(1);
-    v__DOT__missCount = VL_RAND_RESET_I(32);
+    v__DOT__writeMissCount = VL_RAND_RESET_I(32);
     v__DOT__T2 = VL_RAND_RESET_I(1);
-    v__DOT__currentReqEntry = VL_RAND_RESET_I(12);
+    v__DOT__T5 = VL_RAND_RESET_I(1);
+    v__DOT__currentWriteReqEntry = VL_RAND_RESET_I(12);
     { int __Vi0=0; for (; __Vi0<8192; ++__Vi0) {
 	    v__DOT__tagStorage[__Vi0] = VL_RAND_RESET_I(12);
     }}
-    v__DOT__T9 = VL_RAND_RESET_I(1);
+    v__DOT__T8 = VL_RAND_RESET_I(1);
     v__DOT__state = VL_RAND_RESET_I(2);
     v__DOT__initCtr = VL_RAND_RESET_I(13);
-    v__DOT__T25 = VL_RAND_RESET_I(1);
-    v__DOT__T28 = VL_RAND_RESET_I(1);
+    v__DOT__T19 = VL_RAND_RESET_I(1);
+    v__DOT__currentReqEntry = VL_RAND_RESET_I(12);
+    v__DOT__T26 = VL_RAND_RESET_I(1);
     v__DOT__T29 = VL_RAND_RESET_I(1);
+    v__DOT__T30 = VL_RAND_RESET_I(1);
+    v__DOT__T36 = VL_RAND_RESET_I(1);
+    v__DOT__writeCount = VL_RAND_RESET_I(32);
+    v__DOT__T40 = VL_RAND_RESET_I(1);
+    v__DOT__readMissCount = VL_RAND_RESET_I(32);
     v__DOT__readCount = VL_RAND_RESET_I(32);
-    v__DOT__T33 = VL_RAND_RESET_I(1);
-    v__DOT__T37 = VL_RAND_RESET_I(1);
-    v__DOT__currentWriteReqEntry = VL_RAND_RESET_I(12);
-    v__DOT__T39 = VL_RAND_RESET_I(1);
+    v__DOT__T46 = VL_RAND_RESET_I(1);
     v__DOT__requestReg = VL_RAND_RESET_I(24);
-    v__DOT__T42 = VL_RAND_RESET_Q(64);
+    v__DOT__T50 = VL_RAND_RESET_Q(64);
     { int __Vi0=0; for (; __Vi0<8192; ++__Vi0) {
 	    v__DOT__cacheLines[__Vi0] = VL_RAND_RESET_Q(64);
     }}
@@ -137,10 +142,10 @@ void VSimpleDMVectorCache::_combo__TOP__1(VSimpleDMVectorCache__Syms* __restrict
     VL_DEBUG_IF(VL_PRINTF("    VSimpleDMVectorCache::_combo__TOP__1\n"); );
     VSimpleDMVectorCache* __restrict vlTOPp VL_ATTR_UNUSED = vlSymsp->TOPp;
     // Body
-    VL_ASSIGN_ISI(1,vlTOPp->__Vcellinp__v__io_memWriteReq_ready, vlTOPp->io_memWriteReq_ready);
     VL_ASSIGN_ISI(1,vlTOPp->__Vcellinp__v__io_memResp_valid, vlTOPp->io_memResp_valid);
-    VL_ASSIGN_ISI(1,vlTOPp->__Vcellinp__v__io_writeReq_valid, vlTOPp->io_writeReq_valid);
+    VL_ASSIGN_ISI(1,vlTOPp->__Vcellinp__v__io_memWriteReq_ready, vlTOPp->io_memWriteReq_ready);
     VL_ASSIGN_ISI(1,vlTOPp->__Vcellinp__v__io_memReq_ready, vlTOPp->io_memReq_ready);
+    VL_ASSIGN_ISI(1,vlTOPp->__Vcellinp__v__io_writeReq_valid, vlTOPp->io_writeReq_valid);
     VL_ASSIGN_ISI(1,vlTOPp->__Vcellinp__v__io_readReq_valid, vlTOPp->io_readReq_valid);
     VL_ASSIGN_ISI(1,vlTOPp->__Vcellinp__v__io_readResp_ready, vlTOPp->io_readResp_ready);
     VL_ASSIGN_ISI(1,vlTOPp->__Vcellinp__v__clk, vlTOPp->clk);
@@ -160,40 +165,67 @@ void VSimpleDMVectorCache::_sequent__TOP__3(VSimpleDMVectorCache__Syms* __restri
     VL_SIG16(__Vdlyvdim0__v__DOT__cacheLines__v0,12,0);
     VL_SIG16(__Vdlyvdim0__v__DOT__cacheLines__v1,12,0);
     //char	__VpadToAlign38[2];
-    VL_SIG(__Vdly__v__DOT__missCount,31,0);
+    VL_SIG(__Vdly__v__DOT__writeMissCount,31,0);
+    VL_SIG(__Vdly__v__DOT__writeCount,31,0);
+    VL_SIG(__Vdly__v__DOT__readMissCount,31,0);
     VL_SIG(__Vdly__v__DOT__readCount,31,0);
     VL_SIG64(__Vdlyvval__v__DOT__cacheLines__v0,63,0);
     VL_SIG64(__Vdlyvval__v__DOT__cacheLines__v1,63,0);
     // Body
     __Vdly__v__DOT__readCount = vlTOPp->v__DOT__readCount;
-    __Vdly__v__DOT__missCount = vlTOPp->v__DOT__missCount;
+    __Vdly__v__DOT__writeMissCount = vlTOPp->v__DOT__writeMissCount;
+    __Vdly__v__DOT__writeCount = vlTOPp->v__DOT__writeCount;
+    __Vdly__v__DOT__readMissCount = vlTOPp->v__DOT__readMissCount;
     __Vdly__v__DOT__initCtr = vlTOPp->v__DOT__initCtr;
     __Vdly__v__DOT__state = vlTOPp->v__DOT__state;
     __Vdlyvset__v__DOT__cacheLines__v0 = 0;
     __Vdlyvset__v__DOT__cacheLines__v1 = 0;
     __Vdlyvset__v__DOT__tagStorage__v0 = 0;
-    // ALWAYS at SimpleDMVectorCache.v:223
+    // ALWAYS at SimpleDMVectorCache.v:261
     vlTOPp->v__DOT__enableWriteOutputReg = ((~ (IData)(vlTOPp->__Vcellinp__v__reset)) 
-					    & (IData)(vlTOPp->v__DOT__T33));
-    // ALWAYS at SimpleDMVectorCache.v:212
+					    & (IData)(vlTOPp->v__DOT__T46));
+    // ALWAYS at SimpleDMVectorCache.v:250
     if (vlTOPp->__Vcellinp__v__reset) {
 	__Vdly__v__DOT__readCount = 0;
     } else {
-	if (vlTOPp->v__DOT__T33) {
+	if (vlTOPp->v__DOT__T46) {
 	    __Vdly__v__DOT__readCount = ((IData)(1) 
 					 + vlTOPp->v__DOT__readCount);
 	}
     }
-    // ALWAYS at SimpleDMVectorCache.v:191
+    // ALWAYS at SimpleDMVectorCache.v:217
     if (vlTOPp->__Vcellinp__v__reset) {
-	__Vdly__v__DOT__missCount = 0;
+	__Vdly__v__DOT__writeMissCount = 0;
     } else {
 	if (vlTOPp->v__DOT__T2) {
-	    __Vdly__v__DOT__missCount = ((IData)(1) 
-					 + vlTOPp->v__DOT__missCount);
+	    __Vdly__v__DOT__writeMissCount = ((IData)(1) 
+					      + vlTOPp->v__DOT__writeMissCount);
 	}
     }
-    // ALWAYS at SimpleDMVectorCache.v:207
+    // ALWAYS at SimpleDMVectorCache.v:238
+    if (vlTOPp->__Vcellinp__v__reset) {
+	__Vdly__v__DOT__writeCount = 0;
+    } else {
+	if (vlTOPp->v__DOT__T2) {
+	    __Vdly__v__DOT__writeCount = ((IData)(1) 
+					  + vlTOPp->v__DOT__writeCount);
+	} else {
+	    if (vlTOPp->v__DOT__T40) {
+		__Vdly__v__DOT__writeCount = ((IData)(1) 
+					      + vlTOPp->v__DOT__writeCount);
+	    }
+	}
+    }
+    // ALWAYS at SimpleDMVectorCache.v:245
+    if (vlTOPp->__Vcellinp__v__reset) {
+	__Vdly__v__DOT__readMissCount = 0;
+    } else {
+	if (vlTOPp->v__DOT__T19) {
+	    __Vdly__v__DOT__readMissCount = ((IData)(1) 
+					     + vlTOPp->v__DOT__readMissCount);
+	}
+    }
+    // ALWAYS at SimpleDMVectorCache.v:233
     if (vlTOPp->__Vcellinp__v__reset) {
 	__Vdly__v__DOT__initCtr = 0;
     } else {
@@ -202,16 +234,16 @@ void VSimpleDMVectorCache::_sequent__TOP__3(VSimpleDMVectorCache__Syms* __restri
 						 + (IData)(vlTOPp->v__DOT__initCtr)));
 	}
     }
-    // ALWAYS at SimpleDMVectorCache.v:217
+    // ALWAYS at SimpleDMVectorCache.v:255
     vlTOPp->v__DOT__requestReg = vlTOPp->__Vcellinp__v__io_readReq_bits;
-    // ALWAYS at SimpleDMVectorCache.v:198
+    // ALWAYS at SimpleDMVectorCache.v:224
     if (vlTOPp->__Vcellinp__v__reset) {
 	__Vdly__v__DOT__state = 0;
     } else {
-	if (vlTOPp->v__DOT__T9) {
+	if (vlTOPp->v__DOT__T8) {
 	    __Vdly__v__DOT__state = 1;
 	} else {
-	    if (vlTOPp->v__DOT__T2) {
+	    if (vlTOPp->v__DOT__T19) {
 		__Vdly__v__DOT__state = 2;
 	    } else {
 		if (((0 == (IData)(vlTOPp->v__DOT__state)) 
@@ -221,21 +253,21 @@ void VSimpleDMVectorCache::_sequent__TOP__3(VSimpleDMVectorCache__Syms* __restri
 	    }
 	}
     }
-    // ALWAYS at SimpleDMVectorCache.v:218
-    if (vlTOPp->v__DOT__T9) {
+    // ALWAYS at SimpleDMVectorCache.v:256
+    if (vlTOPp->v__DOT__T8) {
 	__Vdlyvval__v__DOT__cacheLines__v0 = vlTOPp->__Vcellinp__v__io_memResp_bits;
 	__Vdlyvset__v__DOT__cacheLines__v0 = 1;
 	__Vdlyvdim0__v__DOT__cacheLines__v0 = (0x1fff 
 					       & vlTOPp->__Vcellinp__v__io_readReq_bits);
     }
-    if (((IData)(vlTOPp->v__DOT__T39) & (IData)(vlTOPp->v__DOT__T37))) {
+    if (vlTOPp->v__DOT__T40) {
 	__Vdlyvval__v__DOT__cacheLines__v1 = vlTOPp->__Vcellinp__v__io_writeData;
 	__Vdlyvset__v__DOT__cacheLines__v1 = 1;
 	__Vdlyvdim0__v__DOT__cacheLines__v1 = (0x1fff 
 					       & vlTOPp->__Vcellinp__v__io_writeReq_bits);
     }
-    // ALWAYS at SimpleDMVectorCache.v:196
-    if (vlTOPp->v__DOT__T9) {
+    // ALWAYS at SimpleDMVectorCache.v:222
+    if (vlTOPp->v__DOT__T8) {
 	__Vdlyvval__v__DOT__tagStorage__v0 = (1 | (0xffe 
 						   & (vlTOPp->__Vcellinp__v__io_readReq_bits 
 						      >> 0xc)));
@@ -244,10 +276,12 @@ void VSimpleDMVectorCache::_sequent__TOP__3(VSimpleDMVectorCache__Syms* __restri
 					       & vlTOPp->__Vcellinp__v__io_readReq_bits);
     }
     vlTOPp->v__DOT__readCount = __Vdly__v__DOT__readCount;
-    vlTOPp->v__DOT__missCount = __Vdly__v__DOT__missCount;
+    vlTOPp->v__DOT__writeMissCount = __Vdly__v__DOT__writeMissCount;
+    vlTOPp->v__DOT__writeCount = __Vdly__v__DOT__writeCount;
+    vlTOPp->v__DOT__readMissCount = __Vdly__v__DOT__readMissCount;
     vlTOPp->v__DOT__initCtr = __Vdly__v__DOT__initCtr;
     vlTOPp->v__DOT__state = __Vdly__v__DOT__state;
-    // ALWAYSPOST at SimpleDMVectorCache.v:219
+    // ALWAYSPOST at SimpleDMVectorCache.v:257
     if (__Vdlyvset__v__DOT__cacheLines__v0) {
 	vlTOPp->v__DOT__cacheLines[(IData)(__Vdlyvdim0__v__DOT__cacheLines__v0)] 
 	    = __Vdlyvval__v__DOT__cacheLines__v0;
@@ -256,19 +290,21 @@ void VSimpleDMVectorCache::_sequent__TOP__3(VSimpleDMVectorCache__Syms* __restri
 	vlTOPp->v__DOT__cacheLines[(IData)(__Vdlyvdim0__v__DOT__cacheLines__v1)] 
 	    = __Vdlyvval__v__DOT__cacheLines__v1;
     }
-    // ALWAYSPOST at SimpleDMVectorCache.v:197
+    // ALWAYSPOST at SimpleDMVectorCache.v:223
     if (__Vdlyvset__v__DOT__tagStorage__v0) {
 	vlTOPp->v__DOT__tagStorage[(IData)(__Vdlyvdim0__v__DOT__tagStorage__v0)] 
 	    = __Vdlyvval__v__DOT__tagStorage__v0;
     }
     VL_ASSIGN_SII(1,vlTOPp->io_readResp_valid, vlTOPp->v__DOT__enableWriteOutputReg);
     VL_ASSIGN_SII(32,vlTOPp->io_readCount, vlTOPp->v__DOT__readCount);
-    VL_ASSIGN_SII(32,vlTOPp->io_missCount, vlTOPp->v__DOT__missCount);
+    VL_ASSIGN_SII(32,vlTOPp->io_writeMissCount, vlTOPp->v__DOT__writeMissCount);
+    VL_ASSIGN_SII(32,vlTOPp->io_writeCount, vlTOPp->v__DOT__writeCount);
+    VL_ASSIGN_SII(32,vlTOPp->io_readMissCount, vlTOPp->v__DOT__readMissCount);
     VL_ASSIGN_SII(24,vlTOPp->io_readRespInd, vlTOPp->v__DOT__requestReg);
     VL_ASSIGN_SII(1,vlTOPp->io_cacheActive, (1 == (IData)(vlTOPp->v__DOT__state)));
-    vlTOPp->v__DOT__T29 = ((0 != (IData)(vlTOPp->v__DOT__state)) 
+    vlTOPp->v__DOT__T30 = ((0 != (IData)(vlTOPp->v__DOT__state)) 
 			   & (1 == (IData)(vlTOPp->v__DOT__state)));
-    vlTOPp->v__DOT__T42 = vlTOPp->v__DOT__cacheLines
+    vlTOPp->v__DOT__T50 = vlTOPp->v__DOT__cacheLines
 	[(0x1fff & vlTOPp->v__DOT__requestReg)];
 }
 
@@ -281,7 +317,7 @@ void VSimpleDMVectorCache::_combo__TOP__4(VSimpleDMVectorCache__Syms* __restrict
     VL_ASSIGN_QSQ(64,vlTOPp->__Vcellinp__v__io_writeData, vlTOPp->io_writeData);
     VL_ASSIGN_ISI(24,vlTOPp->__Vcellinp__v__io_writeReq_bits, vlTOPp->io_writeReq_bits);
     VL_ASSIGN_ISI(24,vlTOPp->__Vcellinp__v__io_readReq_bits, vlTOPp->io_readReq_bits);
-    vlTOPp->v__DOT__T9 = (((~ ((0 == (IData)(vlTOPp->v__DOT__state)) 
+    vlTOPp->v__DOT__T8 = (((~ ((0 == (IData)(vlTOPp->v__DOT__state)) 
 			       | (1 == (IData)(vlTOPp->v__DOT__state)))) 
 			   & (2 == (IData)(vlTOPp->v__DOT__state))) 
 			  & (IData)(vlTOPp->__Vcellinp__v__io_memResp_valid));
@@ -298,16 +334,18 @@ void VSimpleDMVectorCache::_settle__TOP__5(VSimpleDMVectorCache__Syms* __restric
     VL_ASSIGN_ISI(24,vlTOPp->__Vcellinp__v__io_readReq_bits, vlTOPp->io_readReq_bits);
     VL_ASSIGN_SII(1,vlTOPp->io_readResp_valid, vlTOPp->v__DOT__enableWriteOutputReg);
     VL_ASSIGN_SII(32,vlTOPp->io_readCount, vlTOPp->v__DOT__readCount);
-    VL_ASSIGN_SII(32,vlTOPp->io_missCount, vlTOPp->v__DOT__missCount);
+    VL_ASSIGN_SII(32,vlTOPp->io_writeMissCount, vlTOPp->v__DOT__writeMissCount);
+    VL_ASSIGN_SII(32,vlTOPp->io_writeCount, vlTOPp->v__DOT__writeCount);
+    VL_ASSIGN_SII(32,vlTOPp->io_readMissCount, vlTOPp->v__DOT__readMissCount);
     VL_ASSIGN_SII(24,vlTOPp->io_readRespInd, vlTOPp->v__DOT__requestReg);
     VL_ASSIGN_SII(1,vlTOPp->io_cacheActive, (1 == (IData)(vlTOPp->v__DOT__state)));
-    vlTOPp->v__DOT__T9 = (((~ ((0 == (IData)(vlTOPp->v__DOT__state)) 
+    vlTOPp->v__DOT__T8 = (((~ ((0 == (IData)(vlTOPp->v__DOT__state)) 
 			       | (1 == (IData)(vlTOPp->v__DOT__state)))) 
 			   & (2 == (IData)(vlTOPp->v__DOT__state))) 
 			  & (IData)(vlTOPp->__Vcellinp__v__io_memResp_valid));
-    vlTOPp->v__DOT__T29 = ((0 != (IData)(vlTOPp->v__DOT__state)) 
+    vlTOPp->v__DOT__T30 = ((0 != (IData)(vlTOPp->v__DOT__state)) 
 			   & (1 == (IData)(vlTOPp->v__DOT__state)));
-    vlTOPp->v__DOT__T42 = vlTOPp->v__DOT__cacheLines
+    vlTOPp->v__DOT__T50 = vlTOPp->v__DOT__cacheLines
 	[(0x1fff & vlTOPp->v__DOT__requestReg)];
     VL_ASSIGN_SQQ(64,vlTOPp->io_memWriteData, vlTOPp->__Vcellinp__v__io_writeData);
     VL_ASSIGN_SII(24,vlTOPp->io_memWriteReq_bits, vlTOPp->__Vcellinp__v__io_writeReq_bits);
@@ -315,14 +353,14 @@ void VSimpleDMVectorCache::_settle__TOP__5(VSimpleDMVectorCache__Syms* __restric
 	[(0x1fff & vlTOPp->__Vcellinp__v__io_writeReq_bits)];
     vlTOPp->v__DOT__currentReqEntry = (IData)(vlTOPp->v__DOT__tagStorage)
 	[(0x1fff & vlTOPp->__Vcellinp__v__io_readReq_bits)];
-    VL_ASSIGN_SII(1,vlTOPp->io_memResp_ready, vlTOPp->v__DOT__T9);
-    VL_ASSIGN_SII(1,vlTOPp->io_writeReq_ready, ((IData)(vlTOPp->v__DOT__T29) 
+    VL_ASSIGN_SII(1,vlTOPp->io_memResp_ready, vlTOPp->v__DOT__T8);
+    VL_ASSIGN_SII(1,vlTOPp->io_writeReq_ready, ((IData)(vlTOPp->v__DOT__T30) 
 						& (IData)(vlTOPp->__Vcellinp__v__io_memWriteReq_ready)));
-    vlTOPp->v__DOT__T39 = ((IData)(vlTOPp->v__DOT__T29) 
+    vlTOPp->v__DOT__T36 = ((IData)(vlTOPp->v__DOT__T30) 
 			   & (IData)(vlTOPp->__Vcellinp__v__io_writeReq_valid));
-    vlTOPp->v__DOT__T28 = ((IData)(vlTOPp->v__DOT__T29) 
+    vlTOPp->v__DOT__T29 = ((IData)(vlTOPp->v__DOT__T30) 
 			   & (IData)(vlTOPp->__Vcellinp__v__io_readReq_valid));
-    VL_ASSIGN_SQQ(64,vlTOPp->io_readResp_bits, vlTOPp->v__DOT__T42);
+    VL_ASSIGN_SQQ(64,vlTOPp->io_readResp_bits, vlTOPp->v__DOT__T50);
 }
 
 void VSimpleDMVectorCache::_combo__TOP__6(VSimpleDMVectorCache__Syms* __restrict vlSymsp) {
@@ -335,19 +373,19 @@ void VSimpleDMVectorCache::_combo__TOP__6(VSimpleDMVectorCache__Syms* __restrict
 	[(0x1fff & vlTOPp->__Vcellinp__v__io_writeReq_bits)];
     vlTOPp->v__DOT__currentReqEntry = (IData)(vlTOPp->v__DOT__tagStorage)
 	[(0x1fff & vlTOPp->__Vcellinp__v__io_readReq_bits)];
-    VL_ASSIGN_SII(1,vlTOPp->io_memResp_ready, vlTOPp->v__DOT__T9);
-    VL_ASSIGN_SII(1,vlTOPp->io_writeReq_ready, ((IData)(vlTOPp->v__DOT__T29) 
+    VL_ASSIGN_SII(1,vlTOPp->io_memResp_ready, vlTOPp->v__DOT__T8);
+    VL_ASSIGN_SII(1,vlTOPp->io_writeReq_ready, ((IData)(vlTOPp->v__DOT__T30) 
 						& (IData)(vlTOPp->__Vcellinp__v__io_memWriteReq_ready)));
-    vlTOPp->v__DOT__T39 = ((IData)(vlTOPp->v__DOT__T29) 
+    vlTOPp->v__DOT__T36 = ((IData)(vlTOPp->v__DOT__T30) 
 			   & (IData)(vlTOPp->__Vcellinp__v__io_writeReq_valid));
-    vlTOPp->v__DOT__T28 = ((IData)(vlTOPp->v__DOT__T29) 
+    vlTOPp->v__DOT__T29 = ((IData)(vlTOPp->v__DOT__T30) 
 			   & (IData)(vlTOPp->__Vcellinp__v__io_readReq_valid));
-    vlTOPp->v__DOT__T37 = (((0x7ff & (vlTOPp->__Vcellinp__v__io_writeReq_bits 
-				      >> 0xd)) == (0x7ff 
-						   & ((IData)(vlTOPp->v__DOT__currentWriteReqEntry) 
-						      >> 1))) 
-			   & (IData)(vlTOPp->v__DOT__currentWriteReqEntry));
-    vlTOPp->v__DOT__T25 = ((((0x7ff & (vlTOPp->__Vcellinp__v__io_readReq_bits 
+    vlTOPp->v__DOT__T5 = (((0x7ff & (vlTOPp->__Vcellinp__v__io_writeReq_bits 
+				     >> 0xd)) == (0x7ff 
+						  & ((IData)(vlTOPp->v__DOT__currentWriteReqEntry) 
+						     >> 1))) 
+			  & (IData)(vlTOPp->v__DOT__currentWriteReqEntry));
+    vlTOPp->v__DOT__T26 = ((((0x7ff & (vlTOPp->__Vcellinp__v__io_readReq_bits 
 				       >> 0xd)) == 
 			     (0x7ff & ((IData)(vlTOPp->v__DOT__currentReqEntry) 
 				       >> 1))) & (IData)(vlTOPp->v__DOT__currentReqEntry)) 
@@ -358,56 +396,63 @@ void VSimpleDMVectorCache::_sequent__TOP__7(VSimpleDMVectorCache__Syms* __restri
     VL_DEBUG_IF(VL_PRINTF("    VSimpleDMVectorCache::_sequent__TOP__7\n"); );
     VSimpleDMVectorCache* __restrict vlTOPp VL_ATTR_UNUSED = vlSymsp->TOPp;
     // Body
-    VL_ASSIGN_SQQ(64,vlTOPp->io_readResp_bits, vlTOPp->v__DOT__T42);
+    VL_ASSIGN_SQQ(64,vlTOPp->io_readResp_bits, vlTOPp->v__DOT__T50);
 }
 
 void VSimpleDMVectorCache::_settle__TOP__8(VSimpleDMVectorCache__Syms* __restrict vlSymsp) {
     VL_DEBUG_IF(VL_PRINTF("    VSimpleDMVectorCache::_settle__TOP__8\n"); );
     VSimpleDMVectorCache* __restrict vlTOPp VL_ATTR_UNUSED = vlSymsp->TOPp;
     // Body
-    vlTOPp->v__DOT__T37 = (((0x7ff & (vlTOPp->__Vcellinp__v__io_writeReq_bits 
-				      >> 0xd)) == (0x7ff 
-						   & ((IData)(vlTOPp->v__DOT__currentWriteReqEntry) 
-						      >> 1))) 
-			   & (IData)(vlTOPp->v__DOT__currentWriteReqEntry));
-    vlTOPp->v__DOT__T25 = ((((0x7ff & (vlTOPp->__Vcellinp__v__io_readReq_bits 
+    vlTOPp->v__DOT__T5 = (((0x7ff & (vlTOPp->__Vcellinp__v__io_writeReq_bits 
+				     >> 0xd)) == (0x7ff 
+						  & ((IData)(vlTOPp->v__DOT__currentWriteReqEntry) 
+						     >> 1))) 
+			  & (IData)(vlTOPp->v__DOT__currentWriteReqEntry));
+    vlTOPp->v__DOT__T26 = ((((0x7ff & (vlTOPp->__Vcellinp__v__io_readReq_bits 
 				       >> 0xd)) == 
 			     (0x7ff & ((IData)(vlTOPp->v__DOT__currentReqEntry) 
 				       >> 1))) & (IData)(vlTOPp->v__DOT__currentReqEntry)) 
 			   & (IData)(vlTOPp->__Vcellinp__v__io_readResp_ready));
-    VL_ASSIGN_SII(1,vlTOPp->io_memWriteReq_valid, ((IData)(vlTOPp->v__DOT__T39) 
-						   & (~ (IData)(vlTOPp->v__DOT__T37))));
-    vlTOPp->v__DOT__T33 = ((IData)(vlTOPp->v__DOT__T28) 
-			   & (IData)(vlTOPp->v__DOT__T25));
-    vlTOPp->v__DOT__T2 = ((IData)(vlTOPp->v__DOT__T28) 
-			  & ((~ (IData)(vlTOPp->v__DOT__T25)) 
-			     & ((((0x7ff & (vlTOPp->__Vcellinp__v__io_readReq_bits 
-					    >> 0xd)) 
-				  != (0x7ff & ((IData)(vlTOPp->v__DOT__currentReqEntry) 
-					       >> 1))) 
-				 | (~ (IData)(vlTOPp->v__DOT__currentReqEntry))) 
-				& (IData)(vlTOPp->__Vcellinp__v__io_memReq_ready))));
+    vlTOPp->v__DOT__T40 = ((IData)(vlTOPp->v__DOT__T36) 
+			   & (IData)(vlTOPp->v__DOT__T5));
+    vlTOPp->v__DOT__T2 = ((IData)(vlTOPp->v__DOT__T36) 
+			  & ((~ (IData)(vlTOPp->v__DOT__T5)) 
+			     & (IData)(vlTOPp->__Vcellinp__v__io_memWriteReq_ready)));
+    vlTOPp->v__DOT__T46 = ((IData)(vlTOPp->v__DOT__T29) 
+			   & (IData)(vlTOPp->v__DOT__T26));
+    vlTOPp->v__DOT__T19 = ((IData)(vlTOPp->v__DOT__T29) 
+			   & ((~ (IData)(vlTOPp->v__DOT__T26)) 
+			      & ((((0x7ff & (vlTOPp->__Vcellinp__v__io_readReq_bits 
+					     >> 0xd)) 
+				   != (0x7ff & ((IData)(vlTOPp->v__DOT__currentReqEntry) 
+						>> 1))) 
+				  | (~ (IData)(vlTOPp->v__DOT__currentReqEntry))) 
+				 & (IData)(vlTOPp->__Vcellinp__v__io_memReq_ready))));
 }
 
 void VSimpleDMVectorCache::_combo__TOP__9(VSimpleDMVectorCache__Syms* __restrict vlSymsp) {
     VL_DEBUG_IF(VL_PRINTF("    VSimpleDMVectorCache::_combo__TOP__9\n"); );
     VSimpleDMVectorCache* __restrict vlTOPp VL_ATTR_UNUSED = vlSymsp->TOPp;
     // Body
-    VL_ASSIGN_SII(1,vlTOPp->io_memWriteReq_valid, ((IData)(vlTOPp->v__DOT__T39) 
-						   & (~ (IData)(vlTOPp->v__DOT__T37))));
-    vlTOPp->v__DOT__T33 = ((IData)(vlTOPp->v__DOT__T28) 
-			   & (IData)(vlTOPp->v__DOT__T25));
-    vlTOPp->v__DOT__T2 = ((IData)(vlTOPp->v__DOT__T28) 
-			  & ((~ (IData)(vlTOPp->v__DOT__T25)) 
-			     & ((((0x7ff & (vlTOPp->__Vcellinp__v__io_readReq_bits 
-					    >> 0xd)) 
-				  != (0x7ff & ((IData)(vlTOPp->v__DOT__currentReqEntry) 
-					       >> 1))) 
-				 | (~ (IData)(vlTOPp->v__DOT__currentReqEntry))) 
-				& (IData)(vlTOPp->__Vcellinp__v__io_memReq_ready))));
-    VL_ASSIGN_SII(1,vlTOPp->io_readReq_ready, vlTOPp->v__DOT__T33);
-    VL_ASSIGN_SII(1,vlTOPp->io_memReq_valid, vlTOPp->v__DOT__T2);
-    VL_ASSIGN_SII(24,vlTOPp->io_memReq_bits, ((IData)(vlTOPp->v__DOT__T2)
+    vlTOPp->v__DOT__T40 = ((IData)(vlTOPp->v__DOT__T36) 
+			   & (IData)(vlTOPp->v__DOT__T5));
+    vlTOPp->v__DOT__T2 = ((IData)(vlTOPp->v__DOT__T36) 
+			  & ((~ (IData)(vlTOPp->v__DOT__T5)) 
+			     & (IData)(vlTOPp->__Vcellinp__v__io_memWriteReq_ready)));
+    vlTOPp->v__DOT__T46 = ((IData)(vlTOPp->v__DOT__T29) 
+			   & (IData)(vlTOPp->v__DOT__T26));
+    vlTOPp->v__DOT__T19 = ((IData)(vlTOPp->v__DOT__T29) 
+			   & ((~ (IData)(vlTOPp->v__DOT__T26)) 
+			      & ((((0x7ff & (vlTOPp->__Vcellinp__v__io_readReq_bits 
+					     >> 0xd)) 
+				   != (0x7ff & ((IData)(vlTOPp->v__DOT__currentReqEntry) 
+						>> 1))) 
+				  | (~ (IData)(vlTOPp->v__DOT__currentReqEntry))) 
+				 & (IData)(vlTOPp->__Vcellinp__v__io_memReq_ready))));
+    VL_ASSIGN_SII(1,vlTOPp->io_memWriteReq_valid, vlTOPp->v__DOT__T2);
+    VL_ASSIGN_SII(1,vlTOPp->io_readReq_ready, vlTOPp->v__DOT__T46);
+    VL_ASSIGN_SII(1,vlTOPp->io_memReq_valid, vlTOPp->v__DOT__T19);
+    VL_ASSIGN_SII(24,vlTOPp->io_memReq_bits, ((IData)(vlTOPp->v__DOT__T19)
 					       ? vlTOPp->__Vcellinp__v__io_readReq_bits
 					       : 0));
 }
@@ -416,9 +461,10 @@ void VSimpleDMVectorCache::_settle__TOP__10(VSimpleDMVectorCache__Syms* __restri
     VL_DEBUG_IF(VL_PRINTF("    VSimpleDMVectorCache::_settle__TOP__10\n"); );
     VSimpleDMVectorCache* __restrict vlTOPp VL_ATTR_UNUSED = vlSymsp->TOPp;
     // Body
-    VL_ASSIGN_SII(1,vlTOPp->io_readReq_ready, vlTOPp->v__DOT__T33);
-    VL_ASSIGN_SII(1,vlTOPp->io_memReq_valid, vlTOPp->v__DOT__T2);
-    VL_ASSIGN_SII(24,vlTOPp->io_memReq_bits, ((IData)(vlTOPp->v__DOT__T2)
+    VL_ASSIGN_SII(1,vlTOPp->io_memWriteReq_valid, vlTOPp->v__DOT__T2);
+    VL_ASSIGN_SII(1,vlTOPp->io_readReq_ready, vlTOPp->v__DOT__T46);
+    VL_ASSIGN_SII(1,vlTOPp->io_memReq_valid, vlTOPp->v__DOT__T19);
+    VL_ASSIGN_SII(24,vlTOPp->io_memReq_bits, ((IData)(vlTOPp->v__DOT__T19)
 					       ? vlTOPp->__Vcellinp__v__io_readReq_bits
 					       : 0));
 }

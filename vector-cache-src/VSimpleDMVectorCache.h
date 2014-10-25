@@ -45,7 +45,9 @@ SC_MODULE(VSimpleDMVectorCache) {
     sc_out<uint32_t>	io_memReq_bits;
     sc_out<uint32_t>	io_memWriteReq_bits;
     sc_out<uint32_t>	io_readCount;
-    sc_out<uint32_t>	io_missCount;
+    sc_out<uint32_t>	io_readMissCount;
+    sc_out<uint32_t>	io_writeCount;
+    sc_out<uint32_t>	io_writeMissCount;
     sc_out<vluint64_t>	io_readResp_bits;
     sc_in<vluint64_t>	io_writeData;
     sc_in<vluint64_t>	io_memResp_bits;
@@ -54,22 +56,28 @@ SC_MODULE(VSimpleDMVectorCache) {
     // LOCAL SIGNALS
     // Internals; generally not touched by application code
     VL_SIG8(v__DOT__T2,0,0);
-    VL_SIG8(v__DOT__T9,0,0);
+    VL_SIG8(v__DOT__T5,0,0);
+    VL_SIG8(v__DOT__T8,0,0);
     VL_SIG8(v__DOT__state,1,0);
-    VL_SIG8(v__DOT__T25,0,0);
-    VL_SIG8(v__DOT__T28,0,0);
+    VL_SIG8(v__DOT__T19,0,0);
+    VL_SIG8(v__DOT__T26,0,0);
     VL_SIG8(v__DOT__T29,0,0);
-    VL_SIG8(v__DOT__T33,0,0);
-    VL_SIG8(v__DOT__T37,0,0);
-    VL_SIG8(v__DOT__T39,0,0);
+    VL_SIG8(v__DOT__T30,0,0);
+    VL_SIG8(v__DOT__T36,0,0);
+    VL_SIG8(v__DOT__T40,0,0);
+    VL_SIG8(v__DOT__T46,0,0);
     VL_SIG8(v__DOT__enableWriteOutputReg,0,0);
-    VL_SIG16(v__DOT__currentReqEntry,11,0);
-    VL_SIG16(v__DOT__initCtr,12,0);
     VL_SIG16(v__DOT__currentWriteReqEntry,11,0);
-    VL_SIG(v__DOT__missCount,31,0);
+    VL_SIG16(v__DOT__initCtr,12,0);
+    VL_SIG16(v__DOT__currentReqEntry,11,0);
+    //char	__VpadToAlign134[2];
+    VL_SIG(v__DOT__writeMissCount,31,0);
+    VL_SIG(v__DOT__writeCount,31,0);
+    VL_SIG(v__DOT__readMissCount,31,0);
     VL_SIG(v__DOT__readCount,31,0);
     VL_SIG(v__DOT__requestReg,23,0);
-    VL_SIG64(v__DOT__T42,63,0);
+    //char	__VpadToAlign156[4];
+    VL_SIG64(v__DOT__T50,63,0);
     VL_SIG16(v__DOT__tagStorage[8192],11,0);
     VL_SIG64(v__DOT__cacheLines[8192],63,0);
     
@@ -84,7 +92,7 @@ SC_MODULE(VSimpleDMVectorCache) {
     VL_SIG8(__Vcellinp__v__io_readReq_valid,0,0);
     VL_SIG8(__Vcellinp__v__reset,0,0);
     VL_SIG8(__Vclklast__TOP____Vcellinp__v__clk,0,0);
-    //char	__VpadToAlign82077[3];
+    //char	__VpadToAlign82101[3];
     VL_SIG(__Vcellinp__v__io_writeReq_bits,23,0);
     VL_SIG(__Vcellinp__v__io_readReq_bits,23,0);
     VL_SIG64(__Vcellinp__v__io_memResp_bits,63,0);
@@ -92,7 +100,7 @@ SC_MODULE(VSimpleDMVectorCache) {
     
     // INTERNAL VARIABLES
     // Internals; generally not touched by application code
-    //char	__VpadToAlign82108[4];
+    //char	__VpadToAlign82132[4];
     VSimpleDMVectorCache__Syms*	__VlSymsp;		// Symbol table
     
     // PARAMETERS

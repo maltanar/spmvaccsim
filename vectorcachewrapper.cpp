@@ -13,8 +13,10 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
     vecCache.reset(reset);
     // bind status ports
     vecCache.io_cacheActive(cacheActive);
-    vecCache.io_missCount(missCount);
+    vecCache.io_readMissCount(readMissCount);
     vecCache.io_readCount(readCount);
+    vecCache.io_writeCount(writeCount);
+    vecCache.io_writeMissCount(writeMissCount);
     // bind the FIFO interfaces
     // processor read response port
     readRespAdapter.bindFIFOOutput(readResp);
@@ -57,7 +59,9 @@ void VectorCacheWrapper::printCacheStats()
     cout << "Statistics at time " << sc_time_stamp() << endl;
     cout << "cache active = " << cacheActive << endl;
     cout << "total reads = " << readCount << endl;
-    cout << "total misses = " << missCount << endl;
+    cout << "total read misses = " << readMissCount<< endl;
+    cout << "total writes = " << writeCount << endl;
+    cout << "total write misses = " << writeMissCount << endl;
 }
 
 void VectorCacheWrapper::triggerCacheActive()

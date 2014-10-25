@@ -44,7 +44,8 @@ protected:
     // wrapped vector cache instance
     VSimpleDMVectorCache vecCache;
     // signals to monitor cache statistics
-    sc_signal<quint32> readCount, missCount;
+    sc_signal<quint32> readCount, readMissCount;
+    sc_signal<quint32> writeCount, writeMissCount;
     sc_signal<bool> cacheActive;
 
     // FIFO adapters
@@ -60,3 +61,4 @@ protected:
 };
 
 #endif // VECTORCACHEWRAPPER_H
+
