@@ -1,6 +1,8 @@
 #include "vectorcachetester.h"
 #include "spmvoperation.h"
 
+#include <QDebug>
+
 using namespace std;
 
 VectorCacheTester::VectorCacheTester(sc_module_name name) :

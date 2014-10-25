@@ -93,9 +93,9 @@ QList<quint32> SpMVOperation::getRowLengths(quint32 peID, quint32 peCount)
 
 void SpMVOperation::shiftActiveWindowAndInsert(VectorIndex * window, VectorIndex newElement, int windowSize)
 {
-    for(int i = 0; i < windowSize - 1; i++)
+    for(int i = windowSize - 1; i > 0 ; i--)
     {
-        window[i + 1] = window[i];
+        window[i] = window[i - 1];
     }
 
     window[0] = newElement;

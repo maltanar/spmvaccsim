@@ -11,7 +11,7 @@
 #define MEMRDRSP_FIFO_SIZE      2
 #define WRITE_FIFO_SIZE         16
 #define DRAM_RESP_LATENCY       (10 * PE_CLOCK_CYCLE)
-#define DATAPATH_LATENCY        (GlobalConfig::getHazardWindowSize() * PE_CLOCK_CYCLE)
+#define DATAPATH_LATENCY        ((GlobalConfig::getHazardWindowSize()-2) * PE_CLOCK_CYCLE)
 
 
 class VectorCacheTester : public sc_module
