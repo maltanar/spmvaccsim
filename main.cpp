@@ -69,6 +69,7 @@ int sc_main(int argc, char **argv)
 
     VectorCacheTester tester("main");
 
+    /*
     QList<VectorIndex> test;
 
     for(int i= 0; i < 20 ; i++)
@@ -77,9 +78,10 @@ int sc_main(int argc, char **argv)
         test << i << i + 10;
         //test << 5;
     }
-
-    //tester.setAccessList(rowInds);
     tester.setAccessList(test);
+    */
+
+    tester.setAccessList(rowInds);
     tester.initializeMemory(op->rowCount());
 
     delete op;

@@ -3,6 +3,10 @@
 
 #include <QDebug>
 
+
+//#define DEBUGOUT(X) X
+#define DEBUGOUT(X) 0
+
 using namespace std;
 
 VectorCacheTester::VectorCacheTester(sc_module_name name) :
@@ -74,7 +78,7 @@ void VectorCacheTester::generateReset()
     reset = false;
     // notify other threads so they can start
     resetComplete.notify();
-    cout << "Reset completed at " << sc_time_stamp() << endl;
+    DEBUGOUT(cout << "Reset completed at " << sc_time_stamp() << endl);
 }
 
 void VectorCacheTester::pushReadRequests()
@@ -122,7 +126,7 @@ void VectorCacheTester::pushReadRequests()
         // pop request if ready asserted
         if(m_readReqReady && !readReqList.empty())
         {
-            cout << "Request to " << readReqList.first() << " popped by V$ at " << sc_time_stamp() << endl;
+            DEBUGOUT(cout << "Request to " << readReqList.first() << " popped by V$ at " << sc_time_stamp() << endl);
             readReqList.removeFirst();
         }
     }
@@ -145,7 +149,7 @@ void VectorCacheTester::pullReadResponses()
         if(readRspFIFO.num_available() > 0)
         {
             VectorValue val = readRspFIFO.read();
-            cout << "Response " << val << " at " << sc_time_stamp() << endl;
+            DEBUGOUT(cout << "Response " << val << " at " << sc_time_stamp() << endl);
             // order checking: responses should be issued in the same order
             // as the requests
             sc_assert(val == memoryRead(reqsToPop.first()));
@@ -178,7 +182,7 @@ void VectorCacheTester::handleDRAMReads()
             m_memRespToDispatch.remove(time_now);
             // TODO mem r/w consistency issues here?
             memReadRspFIFO.write(memoryRead(ind));
-            cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl;
+            DEBUGOUT(cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl);
         }
 
         wait(1);
@@ -188,7 +192,7 @@ void VectorCacheTester::handleDRAMReads()
             // schedule response after fixed delay
             double time_disp = (sc_time_stamp() + DRAM_RESP_LATENCY).to_double();
             m_memRespToDispatch[time_disp] = ind;
-            cout << "Memory request for " << ind << " received at " << sc_time_stamp() << endl;
+            DEBUGOUT(cout << "Memory request for " << ind << " received at " << sc_time_stamp() << endl);
         }
     }
 }
@@ -203,7 +207,7 @@ void VectorCacheTester::handleDRAMWrites()
 
         if(memWriteReqFIFO.nb_read(ind))
         {
-            cout << "Memory write to " << ind << " data " << memWriteDataOut << " at " << sc_time_stamp() << endl;
+            DEBUGOUT(cout << "Memory write to " << ind << " data " << memWriteDataOut << " at " << sc_time_stamp() << endl);
             memoryWrite(ind, memWriteDataOut);
         }
 
@@ -230,7 +234,7 @@ void VectorCacheTester::handleDatapath()
 
             writeReqFIFO.write(ind);
             writeDataFIFO.write(val);
-            cout << "Write request to " << ind << " value " << val << " written at " << sc_time_stamp() << endl;
+            DEBUGOUT(cout << "Write request to " << ind << " value " << val << " written at " << sc_time_stamp() << endl);
         }
 
         wait(1);
@@ -242,7 +246,7 @@ void VectorCacheTester::handleDatapath()
             m_writeReqToDispatch[time_disp] = readRspInd;
             // our datapath just performs the operation val = val + ind
             m_writeDataToDispatch.push_back(val + readRspInd);
-            cout << "Read response for " << readRspInd << " value " << val << " received at " << sc_time_stamp() << endl;
+            DEBUGOUT(cout << "Read response for " << readRspInd << " value " << val << " received at " << sc_time_stamp() << endl);
             // check that read responses / write requests appear in correct order
             sc_assert(readRspInd == reqsToPop.first());
             reqsToPop.removeFirst();
@@ -318,6 +322,7 @@ bool VectorCacheTester::checkResult()
 
     // compare against the computed result
     bool match = true;
+    unsigned int mismatchCount = 0;
 
     for(unsigned int i = 0; i < m_allocatedMemorySize; i++)
     {
@@ -326,10 +331,13 @@ bool VectorCacheTester::checkResult()
             match = false;
             cout << "Golden and computed results differ at position " << i << ":" << endl;
             cout << "Golden " << goldenMem[i] << ", computed " << m_mainMemory[i] << endl;
+            mismatchCount++;
         }
     }
 
     delete goldenMem;
+
+    cout << "Mismatch count " << mismatchCount << endl;
 
     return match;
 }
