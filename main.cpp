@@ -71,10 +71,10 @@ int sc_main(int argc, char **argv)
 
     QList<VectorIndex> test;
 
-    for(int i= 0; i < 100 ; i++)
+    for(int i= 0; i < 20 ; i++)
     {
         // test << i << i + 15;
-        test << i << i + 50;
+         test << i << i + 10;
         // test << i;
     }
 

@@ -30,6 +30,7 @@ public:
     void handleDRAMReads();
     void handleDRAMWrites();
     void handleDatapath();
+    void handleWriteData();
 
 protected:
     QList<VectorIndex> m_accessList;
@@ -47,6 +48,7 @@ protected:
     sc_signal<VectorIndex> readRspInd;
 
     sc_fifo<VectorIndex> writeReqFIFO, memWriteReqFIFO;
+    sc_fifo<VectorValue> writeDataFIFO;
     sc_signal<VectorValue> writeDataOut, memWriteDataOut;
 
     // signals to control read request interface

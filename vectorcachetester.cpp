@@ -7,7 +7,7 @@ using namespace std;
 
 VectorCacheTester::VectorCacheTester(sc_module_name name) :
     sc_module(name), vecCache("vec$"), clkSource("clk", PE_CLOCK_CYCLE),
-    readRspFIFO(RDRSP_FIFO_SIZE),
+    readRspFIFO(RDRSP_FIFO_SIZE), writeDataFIFO(WRITE_FIFO_SIZE),
     memReadReqFIFO(MEMRDREQ_FIFO_SIZE), memReadRspFIFO(MEMRDRSP_FIFO_SIZE),
     writeReqFIFO(WRITE_FIFO_SIZE), memWriteReqFIFO(WRITE_FIFO_SIZE)
 {
@@ -40,6 +40,10 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
     SC_CTHREAD(handleDRAMReads, clk.pos());
     SC_CTHREAD(handleDRAMWrites, clk.pos());
     SC_CTHREAD(handleDatapath, clk.pos());
+
+    SC_METHOD(handleWriteData);
+    sensitive << writeReqFIFO.data_read_event();
+    dont_initialize();
 }
 
 VectorCacheTester::~VectorCacheTester()
@@ -225,7 +229,7 @@ void VectorCacheTester::handleDatapath()
             val = m_writeDataToDispatch.takeFirst();
 
             writeReqFIFO.write(ind);
-            writeDataOut = val;
+            writeDataFIFO.write(val);
             cout << "Write request to " << ind << " value " << val << " written at " << sc_time_stamp() << endl;
         }
 
@@ -262,6 +266,15 @@ void VectorCacheTester::handleDatapath()
 
     // stop the simulation
     sc_stop();
+}
+
+void VectorCacheTester::handleWriteData()
+{
+    // whenever a request is popped from the write req FIFO,
+    // pop from the write data FIFO as well
+    VectorValue data;
+    sc_assert(writeDataFIFO.nb_read(data));
+    writeDataOut = data;
 }
 
 
