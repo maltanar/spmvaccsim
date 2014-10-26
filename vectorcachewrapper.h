@@ -20,6 +20,7 @@ public:
 
     void printCacheStats();
     void triggerCacheActive();
+    void flush();
 
     void connectReadReqSignals(sc_signal<VectorIndex> & data, sc_signal<bool> & ready, sc_signal<bool> & valid);
     //void connectWriteReqSignals(sc_signal<VectorIndex> & addr, sc_signal<VectorValue> & data, sc_signal<bool> & ready, sc_signal<bool> & valid);
@@ -47,6 +48,8 @@ protected:
     sc_signal<quint32> readCount, readMissCount;
     sc_signal<quint32> writeCount, writeMissCount;
     sc_signal<bool> cacheActive;
+    // cache flush signal
+    sc_signal<bool> flushCache;
 
     // FIFO adapters
     FIFOOutBreakout<VectorValue> readRespAdapter;

@@ -38,6 +38,7 @@ SC_MODULE(VSimpleDMVectorCache) {
     sc_in<bool>	io_memResp_valid;
     sc_in<bool>	io_memWriteReq_ready;
     sc_out<bool>	io_memWriteReq_valid;
+    sc_in<bool>	io_flushCache;
     sc_out<bool>	io_cacheActive;
     sc_in<uint32_t>	io_readReq_bits;
     sc_out<uint32_t>	io_readRespInd;
@@ -58,32 +59,46 @@ SC_MODULE(VSimpleDMVectorCache) {
     VL_SIG8(v__DOT__T2,0,0);
     VL_SIG8(v__DOT__T5,0,0);
     VL_SIG8(v__DOT__T8,0,0);
-    VL_SIG8(v__DOT__state,1,0);
-    VL_SIG8(v__DOT__T19,0,0);
-    VL_SIG8(v__DOT__T26,0,0);
-    VL_SIG8(v__DOT__T29,0,0);
-    VL_SIG8(v__DOT__T30,0,0);
-    VL_SIG8(v__DOT__T36,0,0);
+    VL_SIG8(v__DOT__state,2,0);
+    VL_SIG8(v__DOT__T28,0,0);
+    VL_SIG8(v__DOT__T32,0,0);
+    VL_SIG8(v__DOT__T35,0,0);
+    VL_SIG8(v__DOT__T39,0,0);
     VL_SIG8(v__DOT__T40,0,0);
+    VL_SIG8(v__DOT__T43,0,0);
+    VL_SIG8(v__DOT__T44,0,0);
     VL_SIG8(v__DOT__T46,0,0);
+    VL_SIG8(v__DOT__T49,0,0);
+    VL_SIG8(v__DOT__T52,0,0);
+    VL_SIG8(v__DOT__T53,0,0);
+    VL_SIG8(v__DOT__T55,0,0);
+    VL_SIG8(v__DOT__T61,0,0);
+    VL_SIG8(v__DOT__T65,0,0);
+    VL_SIG8(v__DOT__T70,0,0);
+    VL_SIG8(v__DOT__T74,0,0);
+    VL_SIG8(v__DOT__T82,0,0);
     VL_SIG8(v__DOT__enableWriteOutputReg,0,0);
     VL_SIG16(v__DOT__currentWriteReqEntry,11,0);
     VL_SIG16(v__DOT__initCtr,12,0);
     VL_SIG16(v__DOT__currentReqEntry,11,0);
-    //char	__VpadToAlign134[2];
+    VL_SIG16(v__DOT__T94,11,0);
+    //char	__VpadToAlign150[2];
     VL_SIG(v__DOT__writeMissCount,31,0);
     VL_SIG(v__DOT__writeCount,31,0);
     VL_SIG(v__DOT__readMissCount,31,0);
     VL_SIG(v__DOT__readCount,31,0);
     VL_SIG(v__DOT__requestReg,23,0);
-    //char	__VpadToAlign156[4];
-    VL_SIG64(v__DOT__T50,63,0);
+    //char	__VpadToAlign172[4];
+    VL_SIG64(v__DOT__flushDataReg,63,0);
+    VL_SIG64(v__DOT__T86,63,0);
+    VL_SIG64(v__DOT__bramReadValue,63,0);
     VL_SIG16(v__DOT__tagStorage[8192],11,0);
     VL_SIG64(v__DOT__cacheLines[8192],63,0);
     
     // LOCAL VARIABLES
     // Internals; generally not touched by application code
     VL_SIG8(__Vcellinp__v__clk,0,0);
+    VL_SIG8(__Vcellinp__v__io_flushCache,0,0);
     VL_SIG8(__Vcellinp__v__io_memWriteReq_ready,0,0);
     VL_SIG8(__Vcellinp__v__io_memResp_valid,0,0);
     VL_SIG8(__Vcellinp__v__io_memReq_ready,0,0);
@@ -92,7 +107,7 @@ SC_MODULE(VSimpleDMVectorCache) {
     VL_SIG8(__Vcellinp__v__io_readReq_valid,0,0);
     VL_SIG8(__Vcellinp__v__reset,0,0);
     VL_SIG8(__Vclklast__TOP____Vcellinp__v__clk,0,0);
-    //char	__VpadToAlign82101[3];
+    //char	__VpadToAlign82134[2];
     VL_SIG(__Vcellinp__v__io_writeReq_bits,23,0);
     VL_SIG(__Vcellinp__v__io_readReq_bits,23,0);
     VL_SIG64(__Vcellinp__v__io_memResp_bits,63,0);
@@ -100,7 +115,7 @@ SC_MODULE(VSimpleDMVectorCache) {
     
     // INTERNAL VARIABLES
     // Internals; generally not touched by application code
-    //char	__VpadToAlign82132[4];
+    //char	__VpadToAlign82164[4];
     VSimpleDMVectorCache__Syms*	__VlSymsp;		// Symbol table
     
     // PARAMETERS
@@ -131,6 +146,7 @@ SC_MODULE(VSimpleDMVectorCache) {
     static IData	_change_request(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
   public:
     static void	_combo__TOP__1(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
+    static void	_combo__TOP__11(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
     static void	_combo__TOP__4(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
     static void	_combo__TOP__6(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
     static void	_combo__TOP__9(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
@@ -140,6 +156,7 @@ SC_MODULE(VSimpleDMVectorCache) {
     static void	_sequent__TOP__3(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
     static void	_sequent__TOP__7(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
     static void	_settle__TOP__10(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
+    static void	_settle__TOP__12(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
     static void	_settle__TOP__5(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
     static void	_settle__TOP__8(VSimpleDMVectorCache__Syms* __restrict vlSymsp);
 } VL_ATTR_ALIGNED(128);

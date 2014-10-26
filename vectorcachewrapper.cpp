@@ -11,6 +11,9 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
     // bind clock and reset
     vecCache.clk(clk);
     vecCache.reset(reset);
+    // bind cache flush port
+    flushCache = false;
+    vecCache.io_flushCache(flushCache);
     // bind status ports
     vecCache.io_cacheActive(cacheActive);
     vecCache.io_readMissCount(readMissCount);
@@ -83,6 +86,26 @@ void VectorCacheWrapper::triggerCacheActive()
 {
     if(cacheActive)
         cacheReady.notify();
+}
+
+void VectorCacheWrapper::flush()
+{
+    // wait until we are in sActive
+    while(!cacheActive)
+        wait(PE_CLOCK_CYCLE);
+
+    cout << "Cache flush starting at " << sc_time_stamp() << endl;
+
+    flushCache = true;
+    wait(10*PE_CLOCK_CYCLE);
+
+    // wait until back into sActive
+    // (flush complete)
+    while(!cacheActive)
+        wait(PE_CLOCK_CYCLE);
+    flushCache = false;
+
+    cout << "Cache flush completed at " << sc_time_stamp() << endl;
 }
 
 void VectorCacheWrapper::connectReadReqSignals(sc_signal<VectorIndex> &data, sc_signal<bool> &ready,

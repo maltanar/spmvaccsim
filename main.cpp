@@ -75,7 +75,7 @@ int sc_main(int argc, char **argv)
     {
         // test << i << i + 15;
         test << i << i + 50;
-
+        // test << i;
     }
 
     //tester.setAccessList(rowInds);

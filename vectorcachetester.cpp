@@ -199,8 +199,8 @@ void VectorCacheTester::handleDRAMWrites()
 
         if(memWriteReqFIFO.nb_read(ind))
         {
-            cout << "Memory write to " << ind << " data " << writeDataOut << " at " << sc_time_stamp() << endl;
-            memoryWrite(ind, writeDataOut);
+            cout << "Memory write to " << ind << " data " << memWriteDataOut << " at " << sc_time_stamp() << endl;
+            memoryWrite(ind, memWriteDataOut);
         }
 
         wait(1);
@@ -236,8 +236,8 @@ void VectorCacheTester::handleDatapath()
             // schedule response after fixed delay
             double time_disp = (sc_time_stamp() + DATAPATH_LATENCY).to_double();
             m_writeReqToDispatch[time_disp] = readRspInd;
-            // our datapath just performs the operation val = val + 1
-            m_writeDataToDispatch.push_back(val + 1);
+            // our datapath just performs the operation val = val + ind
+            m_writeDataToDispatch.push_back(val + readRspInd);
             cout << "Read response for " << readRspInd << " value " << val << " received at " << sc_time_stamp() << endl;
             // check that read responses / write requests appear in correct order
             sc_assert(readRspInd == reqsToPop.first());
@@ -251,6 +251,9 @@ void VectorCacheTester::handleDatapath()
         wait(1);
 
     wait(10);
+
+    // flush the cache
+    vecCache.flush();
 
     simFinished = true;
 
