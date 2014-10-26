@@ -328,7 +328,7 @@ void VSimpleDMVectorCache::_sequent__TOP__3(VSimpleDMVectorCache__Syms* __restri
 			    __Vdly__v__DOT__state = 4;
 			} else {
 			    if (((IData)(vlTOPp->v__DOT__T28) 
-				 & (0x1fff == (IData)(vlTOPp->v__DOT__initCtr)))) {
+				 & (0 == (IData)(vlTOPp->v__DOT__initCtr)))) {
 				__Vdly__v__DOT__state = 1;
 			    } else {
 				if (vlTOPp->v__DOT__T35) {
