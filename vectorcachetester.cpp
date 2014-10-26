@@ -56,13 +56,13 @@ void VectorCacheTester::setAccessList(QList<VectorIndex> list)
     m_accessList = list;
 }
 
-void VectorCacheTester::initializeMemory(unsigned int numElements, VectorValue initValue)
+void VectorCacheTester::initializeMemory(unsigned int numElements)
 {
     m_allocatedMemorySize = numElements;
     m_mainMemory = new VectorValue[numElements];
 
     for(unsigned int i = 0; i < numElements; i++)
-        m_mainMemory[i] = initValue;
+        m_mainMemory[i] = 0;
 }
 
 void VectorCacheTester::generateReset()
@@ -251,13 +251,17 @@ void VectorCacheTester::handleDatapath()
 
     // cache writes determine the finish condition
     // wait until all writes have completed (i.e all write FIFOs empty)
-    while(writeReqFIFO.num_available() > 0 && memWriteReqFIFO.num_available() > 0)
+    while(writeReqFIFO.num_available() > 0)
         wait(1);
 
     wait(10);
 
     // flush the cache
     vecCache.flush();
+
+    // wait until all main memory writes have completed
+    while(memWriteReqFIFO.num_available() > 0)
+            wait(1);
 
     simFinished = true;
 
@@ -266,6 +270,11 @@ void VectorCacheTester::handleDatapath()
 
     // stop the simulation
     sc_stop();
+
+    if(checkResult())
+        cout << "Result is correct!" << endl;
+    else
+        cout << "Result is incorrect!" << endl;
 }
 
 void VectorCacheTester::handleWriteData()
@@ -288,4 +297,39 @@ void VectorCacheTester::memoryWrite(VectorIndex addr, VectorValue data)
 {
     sc_assert(addr < m_allocatedMemorySize);
     m_mainMemory[addr] = data;
+}
+
+bool VectorCacheTester::checkResult()
+{
+    VectorValue * goldenMem = new VectorValue[m_allocatedMemorySize];
+
+    // initialize all golden mem entries to zero
+    for(unsigned int i = 0; i < m_allocatedMemorySize; i++)
+    {
+        goldenMem[i] = 0;
+    }
+
+    // compute the golden values
+    for(unsigned int i = 0; i < m_accessList.size(); i++)
+    {
+        VectorIndex currentIndex = m_accessList[i];
+        goldenMem[currentIndex] += currentIndex;
+    }
+
+    // compare against the computed result
+    bool match = true;
+
+    for(unsigned int i = 0; i < m_allocatedMemorySize; i++)
+    {
+        if(goldenMem[i] != m_mainMemory[i])
+        {
+            match = false;
+            cout << "Golden and computed results differ at position " << i << ":" << endl;
+            cout << "Golden " << goldenMem[i] << ", computed " << m_mainMemory[i] << endl;
+        }
+    }
+
+    delete goldenMem;
+
+    return match;
 }

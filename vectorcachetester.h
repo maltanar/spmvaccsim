@@ -22,7 +22,7 @@ public:
     ~VectorCacheTester();
 
     void setAccessList(QList<VectorIndex> list);
-    void initializeMemory(unsigned int numElements, VectorValue initValue);
+    void initializeMemory(unsigned int numElements);
 
     void generateReset();
     void pushReadRequests();
@@ -64,6 +64,9 @@ protected:
     // datapath behavior
     QMap<double, VectorIndex> m_writeReqToDispatch;
     QList<VectorValue> m_writeDataToDispatch;
+
+    // correctness checking at the end of simulation
+    bool checkResult();
 };
 
 #endif // VECTORCACHETESTER_H
