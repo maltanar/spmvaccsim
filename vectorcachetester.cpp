@@ -11,7 +11,7 @@ using namespace std;
 
 VectorCacheTester::VectorCacheTester(sc_module_name name) :
     sc_module(name), vecCache("vec$"), clkSource("clk", PE_CLOCK_CYCLE),
-    readRspFIFO(RDRSP_FIFO_SIZE), writeDataFIFO(WRITE_FIFO_SIZE),
+    readRspFIFO(RDRSP_FIFO_SIZE), writeDataFIFO(WRITE_FIFO_SIZE), memWriteDataFIFO(WRITE_FIFO_SIZE),
     memReadReqFIFO(MEMRDREQ_FIFO_SIZE), memReadRspFIFO(MEMRDRSP_FIFO_SIZE),
     writeReqFIFO(WRITE_FIFO_SIZE), memWriteReqFIFO(WRITE_FIFO_SIZE)
 {
@@ -47,6 +47,10 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
 
     SC_METHOD(handleWriteData);
     sensitive << writeReqFIFO.data_read_event();
+    dont_initialize();
+
+    SC_METHOD(handleMemWriteData);
+    sensitive << memWriteReqFIFO.data_written_event();
     dont_initialize();
 }
 
@@ -207,8 +211,12 @@ void VectorCacheTester::handleDRAMWrites()
 
         if(memWriteReqFIFO.nb_read(ind))
         {
-            DEBUGOUT(cout << "Memory write to " << ind << " data " << memWriteDataOut << " at " << sc_time_stamp() << endl);
-            memoryWrite(ind, memWriteDataOut);
+            // also pop data from memWriteDataFIFO
+            VectorValue val = 0;
+            sc_assert(memWriteDataFIFO.nb_read(val));
+
+            DEBUGOUT(cout << "Memory write to " << ind << " data " << val << " at " << sc_time_stamp() << endl);
+            memoryWrite(ind, val);
         }
 
         wait(1);
@@ -288,6 +296,13 @@ void VectorCacheTester::handleWriteData()
     VectorValue data;
     sc_assert(writeDataFIFO.nb_read(data));
     writeDataOut = data;
+}
+
+void VectorCacheTester::handleMemWriteData()
+{
+    // whenever a request is pushed into the mem write req FIFO,
+    // push the memWriteData into its own FIFO
+    memWriteDataFIFO.nb_write(memWriteDataOut);
 }
 
 

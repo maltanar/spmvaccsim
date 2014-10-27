@@ -71,18 +71,20 @@ int sc_main(int argc, char **argv)
 
     QList<VectorIndex> test;
 
-    // minimal failing test case:
-
-    for(int i= 0; i < 8191 ; i++)
+    /*
+    for(int i= 0; i < 8 ; i++)
     {
         // test << i << i + 15;
         //test << i << i + 10;
-        test << i << i + 5 << i + 8192;
+        test << i << i + 1 << i + 8;
     }
     tester.setAccessList(test);
 
+    qDebug() << test << endl;
+    */
 
-    //tester.setAccessList(rowInds);
+
+    tester.setAccessList(rowInds);
     tester.initializeMemory(op->rowCount());
 
     delete op;
