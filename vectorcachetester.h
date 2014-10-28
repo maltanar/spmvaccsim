@@ -6,10 +6,10 @@
 #include <QMap>
 #include <QList>
 
-#define RDRSP_FIFO_SIZE         16
+#define RDRSP_FIFO_SIZE         32
 #define MEMRDREQ_FIFO_SIZE      2
 #define MEMRDRSP_FIFO_SIZE      2
-#define WRITE_FIFO_SIZE         16
+#define WRITE_FIFO_SIZE         32
 #define DRAM_RESP_LATENCY       (10 * PE_CLOCK_CYCLE)
 #define DATAPATH_LATENCY        ((GlobalConfig::getHazardWindowSize()-2) * PE_CLOCK_CYCLE)
 
@@ -26,7 +26,6 @@ public:
 
     void generateReset();
     void pushReadRequests();
-    void pullReadResponses();
     void handleDRAMReads();
     void handleDRAMWrites();
     void handleDatapath();

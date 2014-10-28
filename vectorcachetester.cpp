@@ -7,6 +7,8 @@
 //#define DEBUGOUT(X) X
 #define DEBUGOUT(X) 0
 
+VectorIndex indToMonitor = -1;
+
 using namespace std;
 
 VectorCacheTester::VectorCacheTester(sc_module_name name) :
@@ -88,7 +90,9 @@ void VectorCacheTester::generateReset()
 void VectorCacheTester::pushReadRequests()
 {
     wait(resetComplete);
+    cout << "Reset complete at " << sc_time_stamp() << endl;
     wait(vecCache.cacheReady);
+    cout << "Cache ready to accept requests at " << sc_time_stamp() << endl;
 
     // make copy of m_accessList to avoid overwriting
     // call function to create a new list without RAW hazards
@@ -117,6 +121,10 @@ void VectorCacheTester::pushReadRequests()
             // issue request
             m_readReqValid = true;
             m_readReqData = readReqList.first();
+            if(readReqList.first() == indToMonitor)
+            {
+                cout << readReqList.first() << " is being requested at " << sc_time_stamp() << endl;
+            }
         }
         else
         {
@@ -139,37 +147,6 @@ void VectorCacheTester::pushReadRequests()
     m_readReqData = 0xdeadbeef;
 }
 
-void VectorCacheTester::pullReadResponses()
-{
-    wait(resetComplete);
-    wait(vecCache.cacheReady);
-
-    QList<VectorIndex> reqsToPop = m_accessList;
-
-    while(!reqsToPop.empty())
-    {
-        wait(1);
-
-        if(readRspFIFO.num_available() > 0)
-        {
-            VectorValue val = readRspFIFO.read();
-            DEBUGOUT(cout << "Response " << val << " at " << sc_time_stamp() << endl);
-            // order checking: responses should be issued in the same order
-            // as the requests
-            sc_assert(val == memoryRead(reqsToPop.first()));
-            sc_assert(readRspInd == reqsToPop.first());
-            reqsToPop.removeFirst();
-        }
-    }
-
-    // responses determine the finish condition
-    simFinished = true;
-
-    // print final cache stats
-    vecCache.printCacheStats();
-
-    sc_stop();
-}
 
 void VectorCacheTester::handleDRAMReads()
 {
@@ -180,13 +157,23 @@ void VectorCacheTester::handleDRAMReads()
         double time_now = sc_time_stamp().to_double();
         VectorIndex ind = 0;
 
+        // correctness check: no more than 1 outstanding read req
+        // (blocking cache)
+        if(m_memRespToDispatch.size() > 1)
+        {
+            cerr << "Error: " << m_memRespToDispatch.size() << " outstanding DRAM read requests" << endl;
+            sc_stop();
+        }
+
         if(m_memRespToDispatch.contains(time_now))
         {
             ind = m_memRespToDispatch[time_now];
             m_memRespToDispatch.remove(time_now);
             // TODO mem r/w consistency issues here?
-            memReadRspFIFO.write(memoryRead(ind));
-            DEBUGOUT(cout << "Memory response for " << ind << " written at " << sc_time_stamp() << endl);
+            sc_assert(memReadRspFIFO.nb_write(memoryRead(ind)));
+            //cout << "Memory read response for " << ind << " written at " << sc_time_stamp() << endl;
+            if(ind == indToMonitor)
+                cout << "Memory read response for " << ind << " " << memoryRead(ind) <<  " written at " << sc_time_stamp() << endl;
         }
 
         wait(1);
@@ -196,7 +183,9 @@ void VectorCacheTester::handleDRAMReads()
             // schedule response after fixed delay
             double time_disp = (sc_time_stamp() + DRAM_RESP_LATENCY).to_double();
             m_memRespToDispatch[time_disp] = ind;
-            DEBUGOUT(cout << "Memory request for " << ind << " received at " << sc_time_stamp() << endl);
+            //cout << "Memory read request for " << ind << " received at " << sc_time_stamp() << endl;
+            if(ind == indToMonitor)
+                cout << "Memory read request for " << ind << " received at " << sc_time_stamp() << endl;
         }
     }
 }
@@ -214,6 +203,11 @@ void VectorCacheTester::handleDRAMWrites()
             // also pop data from memWriteDataFIFO
             VectorValue val = 0;
             sc_assert(memWriteDataFIFO.nb_read(val));
+
+            if(ind == indToMonitor)
+            {
+                cout << "Memory write to " << ind << " data " << val << " at " << sc_time_stamp() << endl;
+            }
 
             DEBUGOUT(cout << "Memory write to " << ind << " data " << val << " at " << sc_time_stamp() << endl);
             memoryWrite(ind, val);
@@ -243,6 +237,10 @@ void VectorCacheTester::handleDatapath()
             writeReqFIFO.write(ind);
             writeDataFIFO.write(val);
             DEBUGOUT(cout << "Write request to " << ind << " value " << val << " written at " << sc_time_stamp() << endl);
+            if(ind == indToMonitor)
+            {
+                cout << "Write request to " << ind << " value " << val << " written at " << sc_time_stamp() << endl;
+            }
         }
 
         wait(1);
@@ -251,12 +249,35 @@ void VectorCacheTester::handleDatapath()
         {
             // schedule response after fixed delay
             double time_disp = (sc_time_stamp() + DATAPATH_LATENCY).to_double();
-            m_writeReqToDispatch[time_disp] = readRspInd;
+            VectorIndex ind = readRspInd;
+
+            // correctness check: read responses / write requests appear in correct order
+            if(ind != reqsToPop.first())
+            {
+                cerr << "Error: Datapath received read response for " << ind << " while expecting for " << reqsToPop.first() << endl;
+                sc_stop();
+            }
+            // correctness check: since our datapath always increments the result by readRspInd,
+            // any values received should be dividable by readRespInd
+            if (val != 0)
+            {
+                if (((unsigned long int) val ) % ind != 0)
+                {
+                    cerr << "Error: Datapath received invalid read response " << val << " for " << ind << endl;
+                    sc_stop();
+                }
+            }
+
             // our datapath just performs the operation val = val + ind
-            m_writeDataToDispatch.push_back(val + readRspInd);
-            DEBUGOUT(cout << "Read response for " << readRspInd << " value " << val << " received at " << sc_time_stamp() << endl);
-            // check that read responses / write requests appear in correct order
-            sc_assert(readRspInd == reqsToPop.first());
+            m_writeDataToDispatch.push_back(val + ind);
+            m_writeReqToDispatch[time_disp] = ind;
+            DEBUGOUT(cout << "Read response for " << ind << " value " << val << " received at " << sc_time_stamp() << endl);
+
+
+            if(readRspInd == indToMonitor)
+                cout << "Read response for " << readRspInd << " value " << val << " received at " << sc_time_stamp() << endl;
+
+
             reqsToPop.removeFirst();
         }
     }
