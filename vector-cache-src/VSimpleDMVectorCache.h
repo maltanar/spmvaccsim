@@ -56,48 +56,51 @@ SC_MODULE(VSimpleDMVectorCache) {
     
     // LOCAL SIGNALS
     // Internals; generally not touched by application code
-    VL_SIG8(v__DOT__controller__DOT__T3,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T9,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T10,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T1,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T5,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T6,0,0);
     VL_SIG8(v__DOT__controller__DOT__state,2,0);
+    VL_SIG8(v__DOT__controller__DOT__T26,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T27,0,0);
     VL_SIG8(v__DOT__controller__DOT__T30,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T34,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T33,0,0);
     VL_SIG8(v__DOT__controller__DOT__T37,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T38,0,0);
     VL_SIG8(v__DOT__controller__DOT__T41,0,0);
     VL_SIG8(v__DOT__controller__DOT__T42,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T45,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T46,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T48,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T51,0,0);
     VL_SIG8(v__DOT__controller__DOT__T52,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T55,0,0);
     VL_SIG8(v__DOT__controller__DOT__T56,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T59,0,0);
     VL_SIG8(v__DOT__controller__DOT__T60,0,0);
     VL_SIG8(v__DOT__controller__DOT__T63,0,0);
     VL_SIG8(v__DOT__controller__DOT__T64,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T67,0,0);
     VL_SIG8(v__DOT__controller__DOT__T68,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T72,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T73,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T74,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T75,0,0);
     VL_SIG8(v__DOT__controller__DOT__T77,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T79,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T82,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T84,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T90,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T93,0,0);
-    VL_SIG8(v__DOT__controller__DOT__T99,0,0);
-    VL_SIG8(v__DOT__controller__DOT__enableWriteOutputReg,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T83,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T87,0,0);
+    VL_SIG8(v__DOT__controller__DOT__T102,0,0);
+    VL_SIG8(v__DOT__controller__DOT__enableReadRespReg,0,0);
+    //char	__VpadToAlign149[1];
     VL_SIG16(v__DOT__controller__DOT__currentWriteReqEntry,11,0);
     VL_SIG16(v__DOT__controller__DOT__initCtr,12,0);
     VL_SIG16(v__DOT__controller__DOT__currentReqEntry,11,0);
-    VL_SIG16(v__DOT__controller__DOT__T112,11,0);
+    VL_SIG16(v__DOT__controller__DOT__T78,12,0);
+    VL_SIG16(v__DOT__controller__DOT__T111,11,0);
     VL_SIG(v__DOT__controller__DOT__writeMissCount,31,0);
     VL_SIG(v__DOT__controller__DOT__writeCount,31,0);
     VL_SIG(v__DOT__controller__DOT__readMissCount,31,0);
     VL_SIG(v__DOT__controller__DOT__readCount,31,0);
-    VL_SIG(v__DOT__controller__DOT__requestReg,23,0);
-    VL_SIG64(v__DOT__controller__DOT__flushDataReg,63,0);
-    VL_SIG64(v__DOT__controller__DOT__T103,63,0);
-    VL_SIG64(v__DOT__controller__DOT__bramReadValue,63,0);
+    VL_SIG(v__DOT__controller__DOT__prevReadRequestReg,23,0);
+    //char	__VpadToAlign180[4];
+    VL_SIG64(v__DOT__dataMem__DOT__R4,63,0);
+    VL_SIG64(v__DOT__dataMem__DOT__T5,63,0);
     VL_SIG16(v__DOT__controller__DOT__tagStorage[8192],11,0);
-    VL_SIG64(v__DOT__controller__DOT__cacheLines[8192],63,0);
+    VL_SIG64(v__DOT__dataMem__DOT__cacheLines[8192],63,0);
     
     // LOCAL VARIABLES
     // Internals; generally not touched by application code

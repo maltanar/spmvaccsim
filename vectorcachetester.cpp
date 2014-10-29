@@ -7,7 +7,7 @@
 //#define DEBUGOUT(X) X
 #define DEBUGOUT(X) 0
 
-VectorIndex indToMonitor = -1;
+VectorIndex indToMonitor = -2;
 
 using namespace std;
 
@@ -121,10 +121,6 @@ void VectorCacheTester::pushReadRequests()
             // issue request
             m_readReqValid = true;
             m_readReqData = readReqList.first();
-            if(readReqList.first() == indToMonitor)
-            {
-                cout << readReqList.first() << " is being requested at " << sc_time_stamp() << endl;
-            }
         }
         else
         {
@@ -140,6 +136,10 @@ void VectorCacheTester::pushReadRequests()
         {
             DEBUGOUT(cout << "Request to " << readReqList.first() << " popped by V$ at " << sc_time_stamp() << endl);
             readReqList.removeFirst();
+            if(!readReqList.empty() && readReqList.first() == indToMonitor)
+            {
+                cout << readReqList.first() << " is being requested at " << sc_time_stamp() << endl;
+            }
         }
     }
 
@@ -365,8 +365,8 @@ bool VectorCacheTester::checkResult()
         if(goldenMem[i] != m_mainMemory[i])
         {
             match = false;
-            cout << "Golden and computed results differ at position " << i << ":" << endl;
-            cout << "Golden " << goldenMem[i] << ", computed " << m_mainMemory[i] << endl;
+            //cout << "Golden and computed results differ at position " << i << ":" << endl;
+            //cout << "Golden " << goldenMem[i] << ", computed " << m_mainMemory[i] << endl;
             mismatchCount++;
         }
     }

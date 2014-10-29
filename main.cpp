@@ -72,17 +72,14 @@ int sc_main(int argc, char **argv)
     QList<VectorIndex> test;
 
     /*
-    for(int i= 0; i < 8 ; i++)
+    for(int i= 0; i < 32768 ; i++)
     {
         // test << i << i + 15;
         //test << i << i + 10;
-        test << i << i + 1 << i + 8;
+        test << i << i + 16384 << i + 8192;
     }
     tester.setAccessList(test);
-
-    qDebug() << test << endl;
     */
-
 
     tester.setAccessList(rowInds);
     tester.initializeMemory(op->rowCount());
