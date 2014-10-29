@@ -18,7 +18,7 @@ class VectorCacheTester : public sc_module
 {
     SC_HAS_PROCESS(VectorCacheTester);
 public:
-    VectorCacheTester(sc_module_name name);
+    VectorCacheTester(sc_module_name name, int useColdSkip=false);
     ~VectorCacheTester();
 
     void setAccessList(QList<VectorIndex> list);
@@ -36,7 +36,7 @@ protected:
     QList<VectorIndex> m_accessList;
     VectorValue * m_mainMemory;
 
-    VectorCacheWrapper vecCache;
+    VectorCacheWrapper * vecCache;
     bool simFinished;
     sc_clock clkSource;
     sc_in_clk clk;

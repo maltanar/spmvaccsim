@@ -70,7 +70,7 @@ int sc_main(int argc, char **argv)
     quint64 startNZ;
     op->assignWorkToWorker(0, 1, startCol, startNZ, rowInds, colLens);
 
-    VectorCacheTester tester("main");
+    VectorCacheTester tester("main", coldMissSkip);
 
     QList<VectorIndex> test;
 

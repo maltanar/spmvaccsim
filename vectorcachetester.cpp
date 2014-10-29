@@ -2,7 +2,7 @@
 #include "spmvoperation.h"
 
 #include <QDebug>
-
+#include "coldmissskipcachewrapper.h"
 
 //#define DEBUGOUT(X) X
 #define DEBUGOUT(X) 0
@@ -11,8 +11,8 @@ VectorIndex indToMonitor = -2;
 
 using namespace std;
 
-VectorCacheTester::VectorCacheTester(sc_module_name name) :
-    sc_module(name), vecCache("vec$"), clkSource("clk", PE_CLOCK_CYCLE),
+VectorCacheTester::VectorCacheTester(sc_module_name name, int useColdSkip) :
+    sc_module(name), clkSource("clk", PE_CLOCK_CYCLE),
     readRspFIFO(RDRSP_FIFO_SIZE), writeDataFIFO(WRITE_FIFO_SIZE), memWriteDataFIFO(WRITE_FIFO_SIZE),
     memReadReqFIFO(MEMRDREQ_FIFO_SIZE), memReadRspFIFO(MEMRDRSP_FIFO_SIZE),
     writeReqFIFO(WRITE_FIFO_SIZE), memWriteReqFIFO(WRITE_FIFO_SIZE)
@@ -22,23 +22,28 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
 
     clk(clkSource);
 
-    vecCache.initialize();
+    if(useColdSkip)
+        vecCache = new ColdMissSkipCacheWrapper("v$");
+    else
+        vecCache = new VectorCacheWrapper("v$");
 
-    vecCache.clk(clk);
-    vecCache.reset(reset);
+    vecCache->initialize();
 
-    vecCache.readResp.bind(readRspFIFO);
-    vecCache.readRespInd.bind(readRspInd);
-    vecCache.memoryReadReq.bind(memReadReqFIFO);
-    vecCache.memoryReadResp.bind(memReadRspFIFO);
+    vecCache->clk(clk);
+    vecCache->reset(reset);
 
-    vecCache.writeData.bind(writeDataOut);
-    vecCache.writeReq.bind(writeReqFIFO);
+    vecCache->readResp.bind(readRspFIFO);
+    vecCache->readRespInd.bind(readRspInd);
+    vecCache->memoryReadReq.bind(memReadReqFIFO);
+    vecCache->memoryReadResp.bind(memReadRspFIFO);
 
-    vecCache.memoryWriteData.bind(memWriteDataOut);
-    vecCache.memoryWriteReq.bind(memWriteReqFIFO);
+    vecCache->writeData.bind(writeDataOut);
+    vecCache->writeReq.bind(writeReqFIFO);
 
-    vecCache.connectReadReqSignals(m_readReqData, m_readReqReady, m_readReqValid);
+    vecCache->memoryWriteData.bind(memWriteDataOut);
+    vecCache->memoryWriteReq.bind(memWriteReqFIFO);
+
+    vecCache->connectReadReqSignals(m_readReqData, m_readReqReady, m_readReqValid);
 
     reset = true;
 
@@ -61,6 +66,7 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
 VectorCacheTester::~VectorCacheTester()
 {
     delete m_mainMemory;
+    delete vecCache;
 }
 
 void VectorCacheTester::setAccessList(QList<VectorIndex> list)
@@ -93,7 +99,7 @@ void VectorCacheTester::pushReadRequests()
 {
     wait(resetComplete);
     cout << "Reset complete at " << sc_time_stamp() << endl;
-    wait(vecCache.cacheReady);
+    wait(vecCache->cacheReady);
     cout << "Cache ready to accept requests at " << sc_time_stamp() << endl;
 
     // make copy of m_accessList to avoid overwriting
@@ -292,7 +298,7 @@ void VectorCacheTester::handleDatapath()
     wait(10);
 
     // flush the cache
-    vecCache.flush();
+    vecCache->flush();
 
     // wait until all main memory writes have completed
     while(memWriteReqFIFO.num_available() > 0)
@@ -301,7 +307,7 @@ void VectorCacheTester::handleDatapath()
     simFinished = true;
 
     // print final cache stats
-    vecCache.printCacheStats();
+    vecCache->printCacheStats();
 
     // stop the simulation
     sc_stop();
