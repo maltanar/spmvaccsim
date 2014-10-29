@@ -12,17 +12,20 @@ class VectorCacheWrapper : public sc_module
 
 public:
     VectorCacheWrapper(sc_module_name name);
+    ~VectorCacheWrapper();
+
+    virtual void initialize();
 
     sc_in_clk clk;
     sc_in<bool> reset;
 
     sc_event cacheReady;
 
-    void printCacheStats();
+    virtual void printCacheStats();
     void triggerCacheActive();
     void flush();
 
-    void connectReadReqSignals(sc_signal<VectorIndex> & data, sc_signal<bool> & ready, sc_signal<bool> & valid);
+    virtual void connectReadReqSignals(sc_signal<VectorIndex> & data, sc_signal<bool> & ready, sc_signal<bool> & valid);
     //void connectWriteReqSignals(sc_signal<VectorIndex> & addr, sc_signal<VectorValue> & data, sc_signal<bool> & ready, sc_signal<bool> & valid);
 
     // write requests (addr) and data
@@ -43,7 +46,7 @@ public:
 
 protected:
     // wrapped vector cache instance
-    VSimpleDMVectorCache vecCache;
+    VSimpleDMVectorCache * vecCache;
     // signals to monitor cache statistics
     sc_signal<quint32> readCount, readMissCount;
     sc_signal<quint32> writeCount, writeMissCount;

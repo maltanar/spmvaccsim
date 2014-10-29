@@ -46,7 +46,8 @@ SOURCES += main.cpp\
     vector-cache-src/VSimpleDMVectorCache__Syms.cpp \
     vectorcachetester.cpp \
     vector-cache-src/VColdMissSkipVectorCache.cpp \
-    vector-cache-src/VColdMissSkipVectorCache__Syms.cpp
+    vector-cache-src/VColdMissSkipVectorCache__Syms.cpp \
+    coldmissskipcachewrapper.cpp
 
 HEADERS  += spmvoperation.h \
     utilities.h \
@@ -80,6 +81,7 @@ HEADERS  += spmvoperation.h \
     vector-cache-src/VSimpleDMVectorCache__Syms.h \
     vectorcachetester.h \
     vector-cache-src/VColdMissSkipVectorCache.h \
-    vector-cache-src/VColdMissSkipVectorCache__Syms.h
+    vector-cache-src/VColdMissSkipVectorCache__Syms.h \
+    coldmissskipcachewrapper.h
 
 LIBS += -lsystemc -lpthread

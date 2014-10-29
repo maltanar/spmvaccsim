@@ -29,17 +29,19 @@ int sc_main(int argc, char **argv)
     QCommandLineOption spmOption("m", "Sparse matrix to process", "spm");
     QCommandLineOption peClockFreqOption("f", "PE clock frequency (MHz)", "pefreq", "100");
     QCommandLineOption hazardWindowSizeOption("w", "RAW hazard window size", "hraw", "10");
+    QCommandLineOption coldMissSkipOption("c", "Use cold miss skip option", "coldskip", "0");
 
     parser.addOption(spmOption);
     parser.addOption(hazardWindowSizeOption);
     parser.addOption(peClockFreqOption);
-
+    parser.addOption(coldMissSkipOption);
 
     parser.process(app);
 
     QString spm = parser.value(spmOption);
     int peFreq = parser.value(peClockFreqOption).toInt();
     int hazardWindowSize = parser.value(hazardWindowSizeOption).toInt();
+    int coldMissSkip = parser.value(coldMissSkipOption).toInt();
     GlobalConfig::getInstance().setPEFreqMHz(peFreq);
     GlobalConfig::getInstance().setHazardWindowSize(hazardWindowSize);
 
@@ -53,6 +55,7 @@ int sc_main(int argc, char **argv)
     // TODO restrict operation to symmetric matrices --
     // SpMVOperation was built for row-major stuff, but col-major
     // of symmetric is equal to row major anyway
+    // TODO generate start-of-row info if coldMissSkip is set
     SpMVOperation * op = new SpMVOperation(spm);
     if(op->rowCount() != op->colCount())
     {

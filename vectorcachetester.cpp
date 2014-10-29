@@ -22,6 +22,8 @@ VectorCacheTester::VectorCacheTester(sc_module_name name) :
 
     clk(clkSource);
 
+    vecCache.initialize();
+
     vecCache.clk(clk);
     vecCache.reset(reset);
 
