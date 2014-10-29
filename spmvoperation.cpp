@@ -33,7 +33,8 @@ SpMVOperation::~SpMVOperation()
     delete [] m_rowPointers;
 }
 
-void SpMVOperation::assignWorkToWorker(quint32 peID, quint32 peCount, quint32 &startingRow, quint64 &startingNZ, QList<quint32> &dvAccessPattern, QList<quint32> &rowLengths)
+void SpMVOperation::assignWorkToWorker(quint32 peID, quint32 peCount, quint32 &startingRow,
+                                       quint64 &startingNZ, QList<quint32> &dvAccessPattern, QList<quint32> &rowLengths)
 {
     // TODO we don't handle corner cases (uneven division for given PE count) here
     // calculate the assigned NZ range for this PE based on the assigned rows
@@ -147,4 +148,25 @@ QList<VectorIndex> SpMVOperation::insertHazardAvoidanceBubbles(QList<VectorIndex
     cout << "Inserted " << newAccessStream.size() - accessStream.size() << " bubbles" << endl;
 
     return newAccessStream;
+}
+
+QList<VectorIndex> SpMVOperation::insertStartOfRowMarkers(QList<VectorIndex> accessStream)
+{
+    QSet<VectorIndex> seenBefore;
+    QList<VectorIndex> result, elementsLeft = accessStream;
+
+    while(!elementsLeft.empty())
+    {
+        VectorIndex current = elementsLeft.takeFirst();
+
+        if(seenBefore.contains(current) || current == BUBBLE_INDEX)
+            result.push_back(current);
+        else
+        {
+            result.push_back(ROW_START_MARKER | current);
+            seenBefore.insert(current);
+        }
+    }
+
+    return result;
 }

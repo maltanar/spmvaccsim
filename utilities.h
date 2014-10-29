@@ -10,6 +10,7 @@ typedef     unsigned int        VectorIndex;
 typedef     long unsigned int   VectorValue;
 
 #define     BUBBLE_INDEX        (0xFFFFFFFF)
+#define     ROW_START_MARKER    (VectorIndex)(1 << 24)
 
 #define     PE_CLOCK_CYCLE      (sc_time(10, SC_NS) / ((float)(GlobalConfig::getInstance().getPEFreqMHz()) / 100.0   ) )
 #define     MEMC_CLOCK_CYCLE    (sc_time(3, SC_NS) / ((float)(GlobalConfig::getInstance().getMemIOClkFreqMHz()) / 333.0   ) )
