@@ -23,7 +23,7 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
     // bind the FIFO interfaces
     // processor read response port
     readRespAdapter.bindFIFOOutput(readResp);
-    vecCache.io_readRespInd(readRespInd);
+    vecCache.io_readPort_readRespInd(readRespInd);
     // memory read port
     memoryReadReqAdapter.bindFIFOOutput(memoryReadReq);
     memoryReadRespAdapter.bindFIFOInput(memoryReadResp);
@@ -33,21 +33,23 @@ VectorCacheWrapper::VectorCacheWrapper(sc_module_name name) :
     memoryWriteReqAdapter.bindFIFOOutput(memoryWriteReq);
 
     // bind the broken-out (ready,valid,data) FIFO interfaces
-    readRespAdapter.bindSignalInterface(vecCache.io_readResp_valid, vecCache.io_readResp_ready,
-                                        vecCache.io_readResp_bits);
-    memoryReadRespAdapter.bindSignalInterface(vecCache.io_memResp_valid, vecCache.io_memResp_ready,
-                                              vecCache.io_memResp_bits);
-    memoryReadReqAdapter.bindSignalInterface(vecCache.io_memReq_valid, vecCache.io_memReq_ready,
-                                            vecCache.io_memReq_bits);
+
+    readRespAdapter.bindSignalInterface(vecCache.io_readPort_readResp_valid, vecCache.io_readPort_readResp_ready,
+                                        vecCache.io_readPort_readResp_bits);
+
+    memoryReadRespAdapter.bindSignalInterface(vecCache.io_memRead_memResp_valid, vecCache.io_memRead_memResp_ready,
+                                              vecCache.io_memRead_memResp_bits);
+    memoryReadReqAdapter.bindSignalInterface(vecCache.io_memRead_memReq_valid, vecCache.io_memRead_memReq_ready,
+                                            vecCache.io_memRead_memReq_bits);
 
 
-    writeReqAdapter.bindSignalInterface(vecCache.io_writeReq_valid, vecCache.io_writeReq_ready,
-                                        vecCache.io_writeReq_bits);
-    vecCache.io_writeData(writeData);
+    writeReqAdapter.bindSignalInterface(vecCache.io_writePort_writeReq_valid, vecCache.io_writePort_writeReq_ready,
+                                        vecCache.io_writePort_writeReq_bits);
+    vecCache.io_writePort_writeData(writeData);
 
-    memoryWriteReqAdapter.bindSignalInterface(vecCache.io_memWriteReq_valid, vecCache.io_memWriteReq_ready,
-                                              vecCache.io_memWriteReq_bits);
-    vecCache.io_memWriteData(memoryWriteData);
+    memoryWriteReqAdapter.bindSignalInterface(vecCache.io_memWrite_memWriteReq_valid, vecCache.io_memWrite_memWriteReq_ready,
+                                              vecCache.io_memWrite_memWriteReq_bits);
+    vecCache.io_memWrite_memWriteData(memoryWriteData);
 
     // clock for input FIFO adapters
     memoryReadRespAdapter.clk(clk);
@@ -111,17 +113,17 @@ void VectorCacheWrapper::flush()
 void VectorCacheWrapper::connectReadReqSignals(sc_signal<VectorIndex> &data, sc_signal<bool> &ready,
                                                sc_signal<bool> &valid)
 {
-    vecCache.io_readReq_bits(data);
-    vecCache.io_readReq_ready(ready);
-    vecCache.io_readReq_valid(valid);
+    vecCache.io_readPort_readReq_bits(data);
+    vecCache.io_readPort_readReq_ready(ready);
+    vecCache.io_readPort_readReq_valid(valid);
 }
 
 /*
 void VectorCacheWrapper::connectWriteReqSignals(sc_signal<VectorIndex> &addr, sc_signal<VectorValue> &data, sc_signal<bool> &ready, sc_signal<bool> &valid)
 {
-    vecCache.io_writeReq_bits(addr);
+    vecCache.io_writePort_writeReq_bits(addr);
     vecCache.io_writeData(data);
-    vecCache.io_writeReq_ready(ready);
-    vecCache.io_writeReq_valid(valid);
+    vecCache.io_writePort_writeReq_ready(ready);
+    vecCache.io_writePort_writeReq_valid(valid);
 }
 */
