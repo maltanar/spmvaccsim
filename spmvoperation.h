@@ -22,6 +22,7 @@ public:
                             QList<VectorIndex> & dvAccessPattern, QList<VectorIndex> & rowLengths);
 
     static QList<VectorIndex> insertHazardAvoidanceBubbles(QList<VectorIndex> accessStream, int minSameElementSpacing);
+    static QList<VectorIndex> insertStartOfRowMarkers(QList<VectorIndex> accessStream);
 
     QList<VectorIndex> getDVAccessPattern(quint32 peID, quint32 peCount);
     QList<quint32> getRowLengths(quint32 peID, quint32 peCount);

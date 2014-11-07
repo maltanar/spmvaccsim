@@ -38,6 +38,7 @@ protected:
 
     VectorCacheWrapper * vecCache;
     bool simFinished;
+    bool m_useColdSkip;
     sc_clock clkSource;
     sc_in_clk clk;
     sc_signal<bool> reset;

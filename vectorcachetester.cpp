@@ -23,9 +23,15 @@ VectorCacheTester::VectorCacheTester(sc_module_name name, int useColdSkip) :
     clk(clkSource);
 
     if(useColdSkip)
+    {
         vecCache = new ColdMissSkipCacheWrapper("v$");
+        m_useColdSkip = true;
+    }
     else
+    {
         vecCache = new VectorCacheWrapper("v$");
+        m_useColdSkip = false;
+    }
 
     vecCache->initialize();
 
@@ -105,6 +111,10 @@ void VectorCacheTester::pushReadRequests()
     // make copy of m_accessList to avoid overwriting
     // call function to create a new list without RAW hazards
     QList<VectorIndex> readReqList = SpMVOperation::insertHazardAvoidanceBubbles(m_accessList, GlobalConfig::getHazardWindowSize());
+
+    // if desired, add start-of-row markers
+    if(m_useColdSkip)
+        readReqList = SpMVOperation::insertStartOfRowMarkers(readReqList);
 
     while(!readReqList.empty())
     {
