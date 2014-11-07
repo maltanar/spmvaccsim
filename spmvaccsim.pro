@@ -15,7 +15,10 @@ SYSTEMC_ROOT = /home/maltanar/systemc
 SYSTEMC_ARCH = linux64
 VERILATOR_ROOT = /usr/share/verilator
 
-QMAKE_INCDIR += $$SYSTEMC_ROOT/include $$VERILATOR_ROOT/include $$VERILATOR_ROOT/include/vltstd vector-cache-src
+CACHE_DEPTH = 8192
+VECTOR_CACHE_DIR = vector-cache-src/cold-skip/depth-$$CACHE_DEPTH
+
+QMAKE_INCDIR += $$SYSTEMC_ROOT/include $$VERILATOR_ROOT/include $$VERILATOR_ROOT/include/vltstd vector-cache-src $$VECTOR_CACHE_DIR
 QMAKE_LIBDIR += $$SYSTEMC_ROOT/lib-$$SYSTEMC_ARCH
 
 
@@ -45,8 +48,8 @@ SOURCES += main.cpp\
     vector-cache-src/VSimpleDMVectorCache.cpp \
     vector-cache-src/VSimpleDMVectorCache__Syms.cpp \
     vectorcachetester.cpp \
-    vector-cache-src/VColdMissSkipVectorCache.cpp \
-    vector-cache-src/VColdMissSkipVectorCache__Syms.cpp \
+    $$VECTOR_CACHE_DIR/VColdMissSkipVectorCache.cpp \
+    $$VECTOR_CACHE_DIR/VColdMissSkipVectorCache__Syms.cpp \
     coldmissskipcachewrapper.cpp
 
 HEADERS  += spmvoperation.h \
@@ -80,8 +83,8 @@ HEADERS  += spmvoperation.h \
     vector-cache-src/VSimpleDMVectorCache.h \
     vector-cache-src/VSimpleDMVectorCache__Syms.h \
     vectorcachetester.h \
-    vector-cache-src/VColdMissSkipVectorCache.h \
-    vector-cache-src/VColdMissSkipVectorCache__Syms.h \
+    $$VECTOR_CACHE_DIR/VColdMissSkipVectorCache.h \
+    $$VECTOR_CACHE_DIR/VColdMissSkipVectorCache__Syms.h \
     coldmissskipcachewrapper.h
 
 LIBS += -lsystemc -lpthread
