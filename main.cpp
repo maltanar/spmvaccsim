@@ -99,7 +99,7 @@ int sc_main(int argc, char **argv)
     cout << GlobalConfig::getInstance().getResultDataSQL().toStdString() << endl;
 
     /*
-    CREATE TABLE IF NOT EXISTS vectorCacheResult (id integer primary key, bubbles integer,
+    CREATE TABLE IF NOT EXISTS vectorCacheResults (id integer primary key, bubbles integer,
     cacheDepth integer,cacheInitCycles integer, coldSkip integer, coldSkipCount integer,
     flushCycles integer, matrix text, mismatchCount integer, readMiss integer, time integer,
     totalReads integer, totalWrites integer, writeMiss integer);
