@@ -2,6 +2,7 @@
 #define UTILITIES_H
 
 #include <QString>
+#include <QVariant>
 #include <QMap>
 #include <systemc.h>
 #include "verilated.h"
@@ -73,6 +74,9 @@ class GlobalConfig
             return instance;
         }
 
+        static void setResultData(QString key, QVariant value);
+        static QString getResultDataSQL();
+
         static void setPEFreqMHz(int f);
         static int getPEFreqMHz();
 
@@ -112,6 +116,8 @@ class GlobalConfig
         static QString m_dramChipType;
         static QMap<QString, DRAMChipInfo> m_chipInfo;
         static QMap<QString, QString> m_memSysConfig;
+
+        static QMap<QString, QVariant> m_resultData;
 };
 
 

@@ -6,6 +6,7 @@ QString GlobalConfig::m_dramChipType;
 QMap<QString, DRAMChipInfo> GlobalConfig::m_chipInfo;
 int GlobalConfig::m_memorySizeMB;
 QMap<QString, QString> GlobalConfig::m_memSysConfig;
+QMap<QString, QVariant> GlobalConfig::m_resultData;
 
 
 QString getMatrixFilename(QString matrixName)
@@ -78,6 +79,47 @@ QMap<QString, QString> getDefaultDRAMSimConfig()
     return defaultConfig;
 }
 
+
+void GlobalConfig::setResultData(QString key, QVariant value)
+{
+    m_resultData[key] = value;
+}
+
+QString GlobalConfig::getResultDataSQL()
+{
+    QList<QString> keys = m_resultData.keys();
+
+    QString query = "INSERT INTO vectorCacheResults (";
+
+    foreach(QString key, keys)
+    {
+        query += key + ", ";
+    }
+
+    // remove trailing comma and space
+    query.chop(2);
+
+    query += ") VALUES (";
+
+    foreach(QString key, keys)
+    {
+        QVariant currentValue = m_resultData[key];
+
+        if(QString::fromLocal8Bit(currentValue.typeName()) == "QString")
+            query += "'" + currentValue.toString()  + "'";
+        else
+            query += currentValue.toString();
+
+        query += ", ";
+    }
+
+    // remove trailing comma and space
+    query.chop(2);
+
+    query += ");";
+
+    return query;
+}
 
 void GlobalConfig::setPEFreqMHz(int f) {m_peFreq = f;}
 
