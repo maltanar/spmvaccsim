@@ -15,7 +15,10 @@ SYSTEMC_ROOT = /home/maltanar/systemc
 SYSTEMC_ARCH = linux64
 VERILATOR_ROOT = /usr/share/verilator
 
-CACHE_DEPTH = 8192
+# Assign default value to CACHE_DEPTH
+isEmpty(CACHE_DEPTH) {
+    CACHE_DEPTH = 8192
+}
 VECTOR_CACHE_DIR = vector-cache-src/cold-skip/depth-$$CACHE_DEPTH
 
 QMAKE_INCDIR += $$SYSTEMC_ROOT/include $$VERILATOR_ROOT/include $$VERILATOR_ROOT/include/vltstd vector-cache-src $$VECTOR_CACHE_DIR
