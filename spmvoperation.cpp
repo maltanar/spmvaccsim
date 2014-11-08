@@ -144,8 +144,8 @@ QList<VectorIndex> SpMVOperation::insertHazardAvoidanceBubbles(QList<VectorIndex
 
     delete activeWindow;
 
-    cout << "Original access stream length: " << accessStream.size() << ", hazard-free access stream length: " << newAccessStream.size() << endl;
-    cout << "Inserted " << newAccessStream.size() - accessStream.size() << " bubbles" << endl;
+    //cout << "Original access stream length: " << accessStream.size() << ", hazard-free access stream length: " << newAccessStream.size() << endl;
+    //cout << "Inserted " << newAccessStream.size() - accessStream.size() << " bubbles" << endl;
 
     GlobalConfig::getInstance().setResultData("bubbles", newAccessStream.size() - accessStream.size());
 

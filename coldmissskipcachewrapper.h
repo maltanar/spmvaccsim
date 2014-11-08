@@ -14,6 +14,7 @@ public:
     virtual void initialize();
     virtual void connectReadReqSignals(sc_signal<VectorIndex> & data, sc_signal<bool> & ready, sc_signal<bool> & valid);
     virtual void printCacheStats();
+    virtual void saveCacheStats();
 
 protected:
     sc_signal<quint32> coldSkipCount;

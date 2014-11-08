@@ -17,8 +17,6 @@ int sc_main(int argc, char **argv)
     QCoreApplication::setApplicationName("spmv-ocm-sim");
     QCoreApplication::setApplicationVersion("1.0");
 
-    cout << "Configured cache depth: " << CACHE_DEPTH << endl;
-
     // tone down the SystemC verbosity
     sc_report_handler::set_actions (SC_WARNING, SC_DO_NOTHING);
     sc_report_handler::set_actions (SC_INFO, SC_DO_NOTHING);
@@ -98,13 +96,13 @@ int sc_main(int argc, char **argv)
 
     sc_start();
 
-    qDebug() << GlobalConfig::getInstance().getResultDataSQL();
+    cout << GlobalConfig::getInstance().getResultDataSQL().toStdString() << endl;
 
     /*
     CREATE TABLE IF NOT EXISTS vectorCacheResult (id integer primary key, bubbles integer,
     cacheDepth integer,cacheInitCycles integer, coldSkip integer, coldSkipCount integer,
-    matrix text, mismatchCount integer, readMiss integer, time integer, totalReads integer,
-    totalWrites integer, writeMiss integer);
+    flushCycles integer, matrix text, mismatchCount integer, readMiss integer, time integer,
+    totalReads integer, totalWrites integer, writeMiss integer);
      */
 
     return 0;

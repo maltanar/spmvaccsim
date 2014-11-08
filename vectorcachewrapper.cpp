@@ -68,7 +68,7 @@ void VectorCacheWrapper::initialize()
     memoryReadRespAdapter.clk(clk);
     writeReqAdapter.clk(clk);
 
-    SC_METHOD(printCacheStats);
+    //SC_METHOD(printCacheStats);
     //sensitive << clk.pos();
 
     SC_METHOD(triggerCacheActive);
@@ -95,7 +95,10 @@ void VectorCacheWrapper::printCacheStats()
     cout << "total read misses = " << readMissCount<< endl;
     cout << "total writes = " << writeCount << endl;
     cout << "total write misses = " << writeMissCount << endl;
+}
 
+void VectorCacheWrapper::saveCacheStats()
+{
     GlobalConfig::getInstance().setResultData("time", sc_time_stamp() / PE_CLOCK_CYCLE);
     GlobalConfig::getInstance().setResultData("totalReads", readCount.read());
     GlobalConfig::getInstance().setResultData("readMiss", readMissCount.read());
@@ -115,7 +118,9 @@ void VectorCacheWrapper::flush()
     while(!cacheActive)
         wait(PE_CLOCK_CYCLE);
 
-    cout << "Cache flush starting at " << sc_time_stamp() << endl;
+    //cout << "Cache flush starting at " << sc_time_stamp() << endl;
+
+    sc_time start = sc_time_stamp();
 
     flushCache = true;
     wait(10*PE_CLOCK_CYCLE);
@@ -126,7 +131,11 @@ void VectorCacheWrapper::flush()
         wait(PE_CLOCK_CYCLE);
     flushCache = false;
 
-    cout << "Cache flush completed at " << sc_time_stamp() << endl;
+    sc_time end = sc_time_stamp();
+
+    GlobalConfig::getInstance().setResultData("flushCycles", (end-start) / PE_CLOCK_CYCLE);
+
+    //cout << "Cache flush completed at " << sc_time_stamp() << endl;
 }
 
 void VectorCacheWrapper::connectReadReqSignals(sc_signal<VectorIndex> &data, sc_signal<bool> &ready,

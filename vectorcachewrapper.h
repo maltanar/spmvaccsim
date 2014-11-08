@@ -22,6 +22,7 @@ public:
     sc_event cacheReady;
 
     virtual void printCacheStats();
+    virtual void saveCacheStats();
     void triggerCacheActive();
     void flush();
 

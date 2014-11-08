@@ -63,7 +63,7 @@ void ColdMissSkipCacheWrapper::initialize()
     memoryReadRespAdapter.clk(clk);
     writeReqAdapter.clk(clk);
 
-    SC_METHOD(printCacheStats);
+    //SC_METHOD(printCacheStats);
     //sensitive << clk.pos();
 
     SC_METHOD(triggerCacheActive);
@@ -81,6 +81,10 @@ void ColdMissSkipCacheWrapper::printCacheStats()
 {
     VectorCacheWrapper::printCacheStats();
     cout << "total cold skips = " << coldSkipCount << endl;
+}
 
+void ColdMissSkipCacheWrapper::saveCacheStats()
+{
+    VectorCacheWrapper::saveCacheStats();
     GlobalConfig::getInstance().setResultData("coldSkipCount", coldSkipCount.read());
 }

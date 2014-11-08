@@ -104,9 +104,8 @@ void VectorCacheTester::generateReset()
 void VectorCacheTester::pushReadRequests()
 {
     wait(resetComplete);
-    cout << "Reset complete at " << sc_time_stamp() << endl;
     wait(vecCache->cacheReady);
-    cout << "Cache ready to accept requests at " << sc_time_stamp() << endl;
+    DEBUGOUT(cout << "Cache ready to accept requests at " << sc_time_stamp() << endl);
     GlobalConfig::getInstance().setResultData("cacheInitCycles", sc_time_stamp() / PE_CLOCK_CYCLE);
 
     // make copy of m_accessList to avoid overwriting
@@ -317,16 +316,17 @@ void VectorCacheTester::handleDatapath()
 
     simFinished = true;
 
-    // print final cache stats
-    vecCache->printCacheStats();
+    // final cache stats
+    DEBUGOUT(vecCache->printCacheStats());
+    vecCache->saveCacheStats();
 
     // stop the simulation
     sc_stop();
 
     if(checkResult())
-        cout << "Result is correct!" << endl;
+        DEBUGOUT(cout << "Result is correct!" << endl);
     else
-        cout << "Result is incorrect!" << endl;
+        DEBUGOUT(cout << "Result is incorrect!" << endl);
 }
 
 void VectorCacheTester::handleWriteData()
@@ -392,7 +392,7 @@ bool VectorCacheTester::checkResult()
 
     delete goldenMem;
 
-    cout << "Mismatch count " << mismatchCount << endl;
+    DEBUGOUT(cout << "Mismatch count " << mismatchCount << endl);
 
     GlobalConfig::getInstance().setResultData("mismatchCount", mismatchCount);
 
