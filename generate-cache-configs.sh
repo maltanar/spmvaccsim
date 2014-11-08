@@ -1,8 +1,7 @@
 #!/bin/sh
 
 PROJECT_FILE="/home/maltanar/sandbox/spmvaccsim/spmvaccsim.pro"
-#CACHE_SIZES="1024 2048 4096 8192 16384 32768 65536 131072"
-CACHE_SIZES="1024 2048"
+CACHE_SIZES="1024 2048 4096 8192 16384 32768 65536 131072"
 WORK_DIR="/home/maltanar/sandbox/build/spmvaccsim-work"
 TARGET_DIR="/home/maltanar/sandbox/build/spmvaccsim"
 
