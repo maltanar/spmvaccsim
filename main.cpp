@@ -54,6 +54,10 @@ int sc_main(int argc, char **argv)
         parser.showHelp(0);
     }
 
+    GlobalConfig::getInstance().setResultData("matrix", spm);
+    GlobalConfig::getInstance().setResultData("cacheDepth", (unsigned int) CACHE_DEPTH);
+    GlobalConfig::getInstance().setResultData("coldSkip", coldMissSkip);
+
     // TODO restrict operation to symmetric matrices --
     // SpMVOperation was built for row-major stuff, but col-major
     // of symmetric is equal to row major anyway
@@ -93,6 +97,15 @@ int sc_main(int argc, char **argv)
     delete op;
 
     sc_start();
+
+    qDebug() << GlobalConfig::getInstance().getResultDataSQL();
+
+    /*
+    CREATE TABLE IF NOT EXISTS vectorCacheResult (id integer primary key, bubbles integer,
+    cacheDepth integer,cacheInitCycles integer, coldSkip integer, coldSkipCount integer,
+    matrix text, mismatchCount integer, readMiss integer, time integer, totalReads integer,
+    totalWrites integer, writeMiss integer);
+     */
 
     return 0;
 }

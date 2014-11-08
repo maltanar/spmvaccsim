@@ -95,6 +95,12 @@ void VectorCacheWrapper::printCacheStats()
     cout << "total read misses = " << readMissCount<< endl;
     cout << "total writes = " << writeCount << endl;
     cout << "total write misses = " << writeMissCount << endl;
+
+    GlobalConfig::getInstance().setResultData("time", sc_time_stamp() / PE_CLOCK_CYCLE);
+    GlobalConfig::getInstance().setResultData("totalReads", readCount.read());
+    GlobalConfig::getInstance().setResultData("readMiss", readMissCount.read());
+    GlobalConfig::getInstance().setResultData("totalWrites", writeCount.read());
+    GlobalConfig::getInstance().setResultData("writeMiss", writeMissCount.read());
 }
 
 void VectorCacheWrapper::triggerCacheActive()

@@ -81,4 +81,6 @@ void ColdMissSkipCacheWrapper::printCacheStats()
 {
     VectorCacheWrapper::printCacheStats();
     cout << "total cold skips = " << coldSkipCount << endl;
+
+    GlobalConfig::getInstance().setResultData("coldSkipCount", coldSkipCount.read());
 }

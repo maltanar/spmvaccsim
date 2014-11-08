@@ -107,6 +107,7 @@ void VectorCacheTester::pushReadRequests()
     cout << "Reset complete at " << sc_time_stamp() << endl;
     wait(vecCache->cacheReady);
     cout << "Cache ready to accept requests at " << sc_time_stamp() << endl;
+    GlobalConfig::getInstance().setResultData("cacheInitCycles", sc_time_stamp() / PE_CLOCK_CYCLE);
 
     // make copy of m_accessList to avoid overwriting
     // call function to create a new list without RAW hazards
@@ -392,6 +393,8 @@ bool VectorCacheTester::checkResult()
     delete goldenMem;
 
     cout << "Mismatch count " << mismatchCount << endl;
+
+    GlobalConfig::getInstance().setResultData("mismatchCount", mismatchCount);
 
     return match;
 }
