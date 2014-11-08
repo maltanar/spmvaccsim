@@ -9,8 +9,6 @@ QT       += core sql
 TARGET = spmvaccsim
 TEMPLATE = app
 
-DEFINES += NO_STORAGE VL_PRINTF=printf VM_TRACE=0 VM_COVERAGE=0
-
 SYSTEMC_ROOT = /home/maltanar/systemc
 SYSTEMC_ARCH = linux64
 VERILATOR_ROOT = /usr/share/verilator
@@ -19,7 +17,9 @@ VERILATOR_ROOT = /usr/share/verilator
 isEmpty(CACHE_DEPTH) {
     CACHE_DEPTH = 8192
 }
+
 VECTOR_CACHE_DIR = vector-cache-src/cold-skip/depth-$$CACHE_DEPTH
+DEFINES += NO_STORAGE VL_PRINTF=printf VM_TRACE=0 VM_COVERAGE=0 CACHE_DEPTH=$$CACHE_DEPTH
 
 QMAKE_INCDIR += $$SYSTEMC_ROOT/include $$VERILATOR_ROOT/include $$VERILATOR_ROOT/include/vltstd vector-cache-src $$VECTOR_CACHE_DIR
 QMAKE_LIBDIR += $$SYSTEMC_ROOT/lib-$$SYSTEMC_ARCH

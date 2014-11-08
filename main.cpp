@@ -17,6 +17,8 @@ int sc_main(int argc, char **argv)
     QCoreApplication::setApplicationName("spmv-ocm-sim");
     QCoreApplication::setApplicationVersion("1.0");
 
+    cout << "Configured cache depth: " << CACHE_DEPTH << endl;
+
     // tone down the SystemC verbosity
     sc_report_handler::set_actions (SC_WARNING, SC_DO_NOTHING);
     sc_report_handler::set_actions (SC_INFO, SC_DO_NOTHING);
