@@ -9,9 +9,11 @@ mkdir -p $RESULT_FOLDER
 
 for depth in $CACHE_SIZES; do
   for matrix in $MATRICES; do
-    echo "Now processing matrix $matrix with cache depth $depth"
-    $SIMULATOR_FOLDER/spmvaccsim-$depth -m $matrix -c 1 > $RESULT_FOLDER/$depth-$matrix-coldskip.txt
-    $SIMULATOR_FOLDER/spmvaccsim-$depth -m $matrix -c 0 > $RESULT_FOLDER/$depth-$matrix-nocoldskip.txt
+    #echo "Now processing matrix $matrix with cache depth $depth"
+    $SIMULATOR_FOLDER/spmvaccsim-$depth -m $matrix -c 1
+    #> $RESULT_FOLDER/$depth-$matrix-coldskip.txt
+    $SIMULATOR_FOLDER/spmvaccsim-$depth -m $matrix -c 0
+    #> $RESULT_FOLDER/$depth-$matrix-nocoldskip.txt
   done
 done
 
