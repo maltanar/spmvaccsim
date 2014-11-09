@@ -4,7 +4,7 @@
 #include "utilities.h"
 #include "fifoinbreakout.h"
 #include "fifooutbreakout.h"
-#include "vector-cache-src/VSimpleDMVectorCache.h"
+#include "VSimpleDMVectorCache.h"
 
 class VectorCacheWrapper : public sc_module
 {
