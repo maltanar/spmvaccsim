@@ -18,10 +18,11 @@ isEmpty(CACHE_DEPTH) {
     CACHE_DEPTH = 8192
 }
 
-VECTOR_CACHE_DIR = vector-cache-src/cold-skip/depth-$$CACHE_DEPTH
+CMSK_VECTOR_CACHE_DIR = vector-cache-src/cold-skip/depth-$$CACHE_DEPTH
+BASE_VECTOR_CACHE_DIR = vector-cache-src/baseline/depth-$$CACHE_DEPTH
 DEFINES += NO_STORAGE VL_PRINTF=printf VM_TRACE=0 VM_COVERAGE=0 CACHE_DEPTH=$$CACHE_DEPTH
 
-QMAKE_INCDIR += $$SYSTEMC_ROOT/include $$VERILATOR_ROOT/include $$VERILATOR_ROOT/include/vltstd vector-cache-src $$VECTOR_CACHE_DIR
+QMAKE_INCDIR += $$SYSTEMC_ROOT/include $$VERILATOR_ROOT/include $$VERILATOR_ROOT/include/vltstd vector-cache-src $$CMSK_VECTOR_CACHE_DIR $$BASE_VECTOR_CACHE_DIR
 QMAKE_LIBDIR += $$SYSTEMC_ROOT/lib-$$SYSTEMC_ARCH
 
 
@@ -48,11 +49,11 @@ SOURCES += main.cpp\
     burstmemoryport.cpp \
     vectorcachewrapper.cpp \
     vector-cache-src/verilated.cpp \
-    vector-cache-src/VSimpleDMVectorCache.cpp \
-    vector-cache-src/VSimpleDMVectorCache__Syms.cpp \
+    $$BASE_VECTOR_CACHE_DIR/VSimpleDMVectorCache.cpp \
+    $$BASE_VECTOR_CACHE_DIR/VSimpleDMVectorCache__Syms.cpp \
     vectorcachetester.cpp \
-    $$VECTOR_CACHE_DIR/VColdMissSkipVectorCache.cpp \
-    $$VECTOR_CACHE_DIR/VColdMissSkipVectorCache__Syms.cpp \
+    $$CMSK_VECTOR_CACHE_DIR/VColdMissSkipVectorCache.cpp \
+    $$CMSK_VECTOR_CACHE_DIR/VColdMissSkipVectorCache__Syms.cpp \
     coldmissskipcachewrapper.cpp
 
 HEADERS  += spmvoperation.h \
@@ -83,11 +84,11 @@ HEADERS  += spmvoperation.h \
     fifoinbreakout.h \
     fifooutbreakout.h \
     vectorcachewrapper.h \
-    vector-cache-src/VSimpleDMVectorCache.h \
-    vector-cache-src/VSimpleDMVectorCache__Syms.h \
+    $$BASE_VECTOR_CACHE_DIR/VSimpleDMVectorCache.h \
+    $$BASE_VECTOR_CACHE_DIR/VSimpleDMVectorCache__Syms.h \
     vectorcachetester.h \
-    $$VECTOR_CACHE_DIR/VColdMissSkipVectorCache.h \
-    $$VECTOR_CACHE_DIR/VColdMissSkipVectorCache__Syms.h \
+    $$CMSK_VECTOR_CACHE_DIR/VColdMissSkipVectorCache.h \
+    $$CMSK_VECTOR_CACHE_DIR/VColdMissSkipVectorCache__Syms.h \
     coldmissskipcachewrapper.h
 
 LIBS += -lsystemc -lpthread
