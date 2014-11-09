@@ -7,6 +7,14 @@ RESULT_FOLDER="/home/maltanar/sandbox/results/spmvaccsim"
 
 mkdir -p $RESULT_FOLDER
 
+SETUP_QUERY="CREATE TABLE IF NOT EXISTS vectorCacheResults (id integer primary key, bubbles integer,
+    cacheDepth integer,cacheInitCycles integer, coldSkip integer, coldSkipCount integer,
+    flushCycles integer, matrix text, mismatchCount integer, readMiss integer, time integer,
+    totalReads integer, totalWrites integer, writeMiss integer);"
+
+
+echo $SETUP_QUERY
+
 for depth in $CACHE_SIZES; do
   for matrix in $MATRICES; do
     #echo "Now processing matrix $matrix with cache depth $depth"
